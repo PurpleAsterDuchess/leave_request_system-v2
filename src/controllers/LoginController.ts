@@ -49,10 +49,10 @@ export class LoginController {
         throw new Error(LoginController.ERROR_PASSWORD_INCORRECT);
       }
 
-      // let token = new UserDTOToken(user.email, user.role);
-      // res
-      //   .status(StatusCodes.ACCEPTED)
-      //   .send(jwt.sign({ token }, process.env.JWT_SECRET, { expiresIn: "3h" }));
+      let token = new UserDTOToken(user.email, user.role);
+      res
+        .status(StatusCodes.ACCEPTED)
+        .send(jwt.sign({ token }, process.env.JWT_SECRET, { expiresIn: "3h" }));
     } catch (error: any) {
       ResponseHandler.sendErrorResponse(
         res,

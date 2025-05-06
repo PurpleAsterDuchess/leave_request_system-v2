@@ -28,15 +28,15 @@ export class Server {
     legacyHeaders: false, // Disable the X-RateLimit-* headers
   });
 
-  // private readonly jwtRateLimiter = (userEmail: string) =>
-  //   rateLimit({
-  //     windowMs: 15 * 60 * 1000, // 15 minutes
-  //     max: 20, // max requests per window
-  //     message: "Too many requests - try again later",
-  //     standardHeaders: true, // Return Rate limit info in the RateLimit-* headers
-  //     legacyHeaders: false, // Disable the X-RateLimit-* headers
-  //     keyGenerator: (req) => userEmail,
-  //   });
+  private readonly jwtRateLimiter = (userEmail: string) =>
+    rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 20, // max requests per window
+      message: "Too many requests - try again later",
+      standardHeaders: true, // Return Rate limit info in the RateLimit-* headers
+      legacyHeaders: false, // Disable the X-RateLimit-* headers
+      keyGenerator: (req) => userEmail,
+    });
 
   constructor(
     private readonly port: string | number,
@@ -67,21 +67,21 @@ export class Server {
     this.app.use(
       "/api/login",
       this.loginLimiter,
-      // this.logRouteAccess("Login route"),
+      this.logRouteAccess("Login route"),
       this.loginRouter.getRouter()
     );
     this.app.use(
       "/api/roles",
-      // this.authenticateToken,
-      // this.logRouteAccess("Roles route"),
-      // this.jwtRateLimitMiddleware("roles"),
+      this.authenticateToken,
+      this.logRouteAccess("Roles route"),
+      this.jwtRateLimitMiddleware("roles"),
       this.roleRouter.getRouter()
     );
     this.app.use(
       "/api/users",
-      // this.authenticateToken,
-      // this.logRouteAccess("Users route"),
-      // this.jwtRateLimitMiddleware("users"),
+      this.authenticateToken,
+      this.logRouteAccess("Users route"),
+      this.jwtRateLimitMiddleware("users"),
       this.userRouter.getRouter()
     );
   }
@@ -117,81 +117,73 @@ export class Server {
       throw error;
     }
   }
-  //  private authenticateToken(
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ) {
-  //   const authHeader = req.headers.authorization;
-  //   if (authHeader) {
-  //     const tokenReceived = authHeader.split(" ")[1];
+  private authenticateToken(req: Request, res: Response, next: NextFunction) {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      const tokenReceived = authHeader.split(" ")[1];
 
-  //     if (!process.env.JWT_SECRET) {
-  //       //added
-  //       Logger.error(Server.ERROR_TOKEN_SECRET_NOT_DEFINED);
-  //       throw new Error(Server.ERROR_TOKEN_SECRET_NOT_DEFINED);
-  //     }
+      if (!process.env.JWT_SECRET) {
+        //added
+        Logger.error(Server.ERROR_TOKEN_SECRET_NOT_DEFINED);
+        throw new Error(Server.ERROR_TOKEN_SECRET_NOT_DEFINED);
+      }
 
-  //     jwt.verify(tokenReceived, process.env.JWT_SECRET, (err, payload) => {
-  //       if (err) {
-  //         Logger.error(Server.ERROR_TOKEN_IS_INVALID);
-  //         return ResponseHandler.sendErrorResponse(
-  //           res,
-  //           StatusCodes.UNAUTHORIZED,
-  //           Server.ERROR_TOKEN_IS_INVALID
-  //         );
-  //       }
-  //       const {
-  //         token: { email, role },
-  //       } = payload as any;
+      jwt.verify(tokenReceived, process.env.JWT_SECRET, (err, payload) => {
+        if (err) {
+          Logger.error(Server.ERROR_TOKEN_IS_INVALID);
+          return ResponseHandler.sendErrorResponse(
+            res,
+            StatusCodes.UNAUTHORIZED,
+            Server.ERROR_TOKEN_IS_INVALID
+          );
+        }
+        const {
+          token: { email, role },
+        } = payload as any;
 
-  //       if (!email || !role) {
-  //         Logger.error(Server.ERROR_TOKEN_IS_INVALID);
-  //         return ResponseHandler.sendErrorResponse(
-  //           res,
-  //           StatusCodes.UNAUTHORIZED,
-  //           Server.ERROR_TOKEN_IS_INVALID
-  //         );
-  //       }
+        if (!email || !role) {
+          Logger.error(Server.ERROR_TOKEN_IS_INVALID);
+          return ResponseHandler.sendErrorResponse(
+            res,
+            StatusCodes.UNAUTHORIZED,
+            Server.ERROR_TOKEN_IS_INVALID
+          );
+        }
 
-  //       req.signedInUser = { email, role };
-  //       next();
-  //     });
-  //   } else {
-  //     Logger.error(Server.ERROR_TOKEN_NOT_FOUND);
-  //     ResponseHandler.sendErrorResponse(
-  //       res,
-  //       StatusCodes.UNAUTHORIZED,
-  //       Server.ERROR_TOKEN_NOT_FOUND
-  //     );
-  //   }
-  // }
-  // private logRouteAccess(route: string) {
-  //   return (req: Request, res: Response, next: NextFunction) => {
-  //     Logger.info(`${route} accessed by ${req.ip}`);
-  //     next();
-  //   };
-  // }
-  // private jwtRateLimitMiddleware(route: string) {
-  //   return (
-  //     req: Request,
-  //     res: Response,
-  //     next: NextFunction
-  //   ) => {
-  //     const email = req.signedInUser?.email;
+        req.signedInUser = { email, role };
+        next();
+      });
+    } else {
+      Logger.error(Server.ERROR_TOKEN_NOT_FOUND);
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.UNAUTHORIZED,
+        Server.ERROR_TOKEN_NOT_FOUND
+      );
+    }
+  }
+  private logRouteAccess(route: string) {
+    return (req: Request, res: Response, next: NextFunction) => {
+      Logger.info(`${route} accessed by ${req.ip}`);
+      next();
+    };
+  }
+  private jwtRateLimitMiddleware(route: string) {
+    return (req: Request, res: Response, next: NextFunction) => {
+      const email = req.signedInUser?.email;
 
-  //     if (email) {
-  //       Logger.info(`${route} accessed by ${req.ip}`);
-  //       this.jwtRateLimiter(email)(req, res, next);
-  //     } else {
-  //       const ERROR_MESSAGE = "Missing essential information in JWT";
-  //       Logger.error(ERROR_MESSAGE);
-  //       ResponseHandler.sendErrorResponse(
-  //         res,
-  //         StatusCodes.BAD_REQUEST,
-  //         ERROR_MESSAGE
-  //       );
-  //     }
-  //   };
-  // }
+      if (email) {
+        Logger.info(`${route} accessed by ${req.ip}`);
+        this.jwtRateLimiter(email)(req, res, next);
+      } else {
+        const ERROR_MESSAGE = "Missing essential information in JWT";
+        Logger.error(ERROR_MESSAGE);
+        ResponseHandler.sendErrorResponse(
+          res,
+          StatusCodes.BAD_REQUEST,
+          ERROR_MESSAGE
+        );
+      }
+    };
+  }
 }
