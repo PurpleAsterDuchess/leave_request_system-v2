@@ -138,7 +138,7 @@ describe("User Entity", () => {
       new QueryFailedError(
         "INSERT INTO user",
         [],
-        new Error(`#1062 - Duplicate entry '${user.email} for key 'email`)
+        new Error(`#1062 - Duplicate entry ${user.email} for key email`)
       )
     );
     await expect(mockUserRepository.save(user)).resolves.toEqual(user);
