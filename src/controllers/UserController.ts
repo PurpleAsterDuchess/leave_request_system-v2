@@ -28,9 +28,20 @@ export class UserController {
   public static readonly ERROR_UNABLE_TO_FIND_USER_EMAIL = (email: string) =>
     `Unable to find user with the email: ${email}`;
   public static readonly ERROR_VALIDATION_FAILED = "Validation failed";
+
   private userRepository: Repository<User>;
+
   constructor() {
     this.userRepository = AppDataSource.getRepository(User);
+  }
+
+  // Allow reset of AL
+  async resetAnnualLeave(uid: number): Promise<void> {
+    const user = await this.userRepository.findOneBy({ id: uid });
+    if (!user) throw new Error("User not found");
+
+    user.remainingAl = user.initialAlTotal;
+    await this.userRepository.save(user);
   }
 
   public getAll = async (req: Request, res: Response): Promise<void> => {
@@ -89,6 +100,7 @@ export class UserController {
       );
     }
   };
+
   public getById = async (req: Request, res: Response): Promise<void> => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -123,6 +135,7 @@ export class UserController {
       );
     }
   };
+
   public create = async (req: Request, res: Response): Promise<void> => {
     try {
       let user = new User();
@@ -132,6 +145,16 @@ export class UserController {
 
       user.email = req.body.email;
       user.role = req.body.roleId;
+      user.firstname = req.body.firstname;
+      user.surname = req.body.surname;
+
+      if (req.body.initialAlTotal !== undefined) {
+        user.initialAlTotal = req.body.initialAlTotal;
+      }
+
+      if (req.body.remainingAl !== undefined) {
+        user.remainingAl = req.body.remainingAl;
+      }
 
       const errors = await validate(user);
       if (errors.length > 0) {
@@ -156,6 +179,7 @@ export class UserController {
       );
     }
   };
+
   public delete = async (req: Request, res: Response): Promise<void> => {
     const id = req.params.id;
     try {

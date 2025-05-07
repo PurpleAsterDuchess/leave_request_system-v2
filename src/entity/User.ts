@@ -5,7 +5,15 @@ import {
   ManyToOne,
   BeforeInsert,
 } from "typeorm";
-import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator";
+import {
+  IsEmail,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Min,
+  MinLength,
+} from "class-validator";
 import { Role } from "./Role";
 import { Exclude } from "class-transformer";
 import { PasswordHandler } from "../helper/PasswordHandler";
@@ -14,6 +22,14 @@ import { PasswordHandler } from "../helper/PasswordHandler";
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column()
+  @IsString()
+  firstname: string;
+
+  @Column()
+  @IsString()
+  surname: string;
 
   @Column({ select: false }) //obscure from get queries
   @Exclude()
@@ -33,6 +49,20 @@ export class User {
   @IsNotEmpty({ message: "Role is required" })
   role: Role;
 
+  // DTO issue with names and al totals?
+
+  @Column({ default: 25 })
+  @IsOptional()
+  @IsInt({ message: "initialAlTotal must be an integer number" })
+  @Min(0, { message: "initialAlTotal must not be less than 0" })
+  initialAlTotal: number;
+
+  @Column({ default: 0 })
+  @IsOptional()
+  @IsInt({ message: "remainingAl must be an integer number" })
+  @Min(0, { message: "remainingAl must not be less than 0" })
+  remainingAl: number;
+
   @BeforeInsert()
   hashPassword() {
     if (!this.password) {
@@ -43,5 +73,12 @@ export class User {
     );
     this.password = hashedPassword;
     this.salt = salt;
+  }
+
+  @BeforeInsert()
+  setDefaultAlTotal() {
+    if (this.remainingAl === undefined || this.remainingAl === null) {
+      this.remainingAl = this.initialAlTotal ?? 25; // fallback just in case
+    }
   }
 }
