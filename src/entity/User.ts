@@ -49,7 +49,8 @@ export class User {
   @IsNotEmpty({ message: "Role is required" })
   role: Role;
 
-  // DTO issue with names and al totals?
+  @ManyToOne(() => User, { nullable: true })
+  manager: User;
 
   @Column({ default: 25 })
   @IsOptional()

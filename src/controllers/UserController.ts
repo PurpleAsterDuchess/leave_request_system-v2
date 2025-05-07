@@ -6,6 +6,7 @@ import { ResponseHandler } from "../helper/ResponseHandler";
 import { StatusCodes } from "http-status-codes";
 import { validate } from "class-validator";
 import { instanceToPlain } from "class-transformer";
+import { Role } from "../entity/Role";
 
 export class UserController {
   public static readonly ERROR_NO_USER_ID_PROVIDED = "No ID provided";
@@ -30,9 +31,11 @@ export class UserController {
   public static readonly ERROR_VALIDATION_FAILED = "Validation failed";
 
   private userRepository: Repository<User>;
+  private roleRepository: Repository<Role>;
 
   constructor() {
     this.userRepository = AppDataSource.getRepository(User);
+    this.roleRepository = AppDataSource.getRepository(Role);
   }
 
   // Allow reset of AL
@@ -44,10 +47,11 @@ export class UserController {
     await this.userRepository.save(user);
   }
 
+  // Get all users
   public getAll = async (req: Request, res: Response): Promise<void> => {
     try {
       const users = await this.userRepository.find({
-        relations: ["role"], // Include all  role fields in response
+        relations: ["manager", "role"], // Include all  role fields in response
       });
 
       if (users.length === 0) {
@@ -148,6 +152,10 @@ export class UserController {
       user.firstname = req.body.firstname;
       user.surname = req.body.surname;
 
+      if (req.body.manager !== undefined) {
+        user.manager = req.body.manager;
+      }
+
       if (req.body.initialAlTotal !== undefined) {
         user.initialAlTotal = req.body.initialAlTotal;
       }
@@ -201,6 +209,7 @@ export class UserController {
   };
 
   public update = async (req: Request, res: Response): Promise<void> => {
+    console.log("req.body:", req.body);
     const id = req.body.id;
 
     try {
@@ -208,15 +217,43 @@ export class UserController {
         throw new Error(UserController.ERROR_NO_USER_ID_PROVIDED);
       }
 
-      let user = await this.userRepository.findOneBy({ id });
+      let user = await this.userRepository.findOne({
+        where: { id },
+        relations: ["manager", "role"],
+      });
 
       if (!user) {
         throw new Error(UserController.ERROR_USER_NOT_FOUND);
       }
 
       // Update specific fields
-      user.email = req.body.email;
-      user.role = req.body.roleId;
+      if (req.body.email !== undefined) {
+        user.email = req.body.email;
+      }
+
+      if (req.body.roleId !== undefined) {
+        const role = await this.roleRepository.findOneBy({
+          id: req.body.roleId,
+        });
+        if (!role) throw new Error("Invalid role ID.");
+        user.role = role;
+      }
+
+      if (req.body.managerId !== undefined) {
+        const manager = await this.userRepository.findOneBy({
+          id: req.body.managerId,
+        });
+        if (!manager) throw new Error("Invalid manager ID.");
+        user.manager = manager;
+      }
+
+      if (req.body.firstname !== undefined) {
+        user.firstname = req.body.firstname;
+      }
+
+      if (req.body.surname !== undefined) {
+        user.surname = req.body.surname;
+      }
 
       const errors = await validate(user);
       if (errors.length > 0) {
