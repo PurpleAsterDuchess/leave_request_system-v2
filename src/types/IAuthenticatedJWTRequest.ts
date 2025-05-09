@@ -6,8 +6,8 @@ declare global {
       signedInUser?: {
         email?: string;
         role?: Role;
+        uid?: number;
       };
     }
   }
 }
-

@@ -1,12 +1,15 @@
 import { Server } from "./Server";
 import { Router } from "express";
 import { AppDataSource } from "./data-source";
+
 import { RoleRouter } from "./routes/RoleRouter";
 import { RoleController } from "./controllers/RoleController";
 import { UserRouter } from "./routes/UserRouter";
 import { UserController } from "./controllers/UserController";
 import { LoginRouter } from "./routes/LoginRouter";
 import { LoginController } from "./controllers/LoginController";
+import { LeaveRouter } from "./routes/LeaveRouter";
+import { LeaveController } from "./controllers/LeaveController";
 
 //Initialise the port
 const DEFAULT_PORT = 8900;
@@ -23,6 +26,7 @@ const appDataSource = AppDataSource;
 const loginRouter = new LoginRouter(Router(), new LoginController());
 const roleRouter = new RoleRouter(Router(), new RoleController());
 const userRouter = new UserRouter(Router(), new UserController());
+const leaveRouter = new LeaveRouter(Router(), new LeaveController());
 
 // Instantiate/start the server
 const server = new Server(
@@ -30,6 +34,7 @@ const server = new Server(
   loginRouter,
   roleRouter,
   userRouter,
+  leaveRouter,
   appDataSource
 );
 server.start();

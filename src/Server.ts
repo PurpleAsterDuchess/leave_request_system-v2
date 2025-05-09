@@ -1,12 +1,15 @@
 import express, { Request, Response, NextFunction } from "express";
 import { DataSource } from "typeorm";
+
 import { LoginRouter } from "./routes/LoginRouter";
 import { RoleRouter } from "./routes/RoleRouter";
+import { UserRouter } from "./routes/UserRouter";
+import { LeaveRouter } from "./routes/LeaveRouter";
+
 import { StatusCodes } from "http-status-codes";
 import { ResponseHandler } from "./helper/ResponseHandler";
 import { Logger } from "./helper/Logger";
 import morgan, { StreamOptions } from "morgan";
-import { UserRouter } from "./routes/UserRouter";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 
@@ -43,6 +46,7 @@ export class Server {
     private readonly loginRouter: LoginRouter,
     private readonly roleRouter: RoleRouter,
     private readonly userRouter: UserRouter,
+    private readonly leaveRouter: LeaveRouter,
     private readonly appDataSource: DataSource
   ) {
     this.app = express();
@@ -83,6 +87,13 @@ export class Server {
       this.logRouteAccess("Users route"),
       this.jwtRateLimitMiddleware("users"),
       this.userRouter.getRouter()
+    );
+    this.app.use(
+      "/api/leave",
+      this.authenticateToken,
+      this.logRouteAccess("Leave route"),
+      this.jwtRateLimitMiddleware("leave"),
+      this.leaveRouter.getRouter()
     );
   }
 
@@ -137,8 +148,9 @@ export class Server {
             Server.ERROR_TOKEN_IS_INVALID
           );
         }
+
         const {
-          token: { email, role },
+          token: { email, role, uid },
         } = payload as any;
 
         if (!email || !role) {
@@ -150,7 +162,7 @@ export class Server {
           );
         }
 
-        req.signedInUser = { email, role };
+        req.signedInUser = { email, role, uid };
         next();
       });
     } else {
