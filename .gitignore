@@ -1,4 +1,5 @@
 .env.development
+.txt/
 .idea/
 .vscode/
 node_modules/
