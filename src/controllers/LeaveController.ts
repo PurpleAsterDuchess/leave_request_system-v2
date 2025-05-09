@@ -22,7 +22,9 @@ export class LeaveController {
     "Leave with the provided ID not found";
   public static readonly ERROR_USER_REQUIRED = "User is required";
   public static readonly ERROR_RETRIEVING_LEAVE = (error: string) =>
-    `Error retrieving user: ${error}`;
+    `Error retrieving leave: ${error}`;
+  public static readonly ERROR_LEAVE_EXCEEDS_AL =
+    "Dates provided are greater than allowed AL";
   public static readonly ERROR_UNABLE_TO_FIND_USER_EMAIL = (email: string) =>
     `Unable to find user with the email: ${email}`;
   public static readonly ERROR_VALIDATION_FAILED = "Validation failed";
@@ -30,10 +32,20 @@ export class LeaveController {
     "Invalid authorization for this action";
 
   private leaveRepository: Repository<LeaveRequest>;
+  private userRepository: Repository<User>;
 
   constructor() {
     this.leaveRepository = AppDataSource.getRepository(LeaveRequest);
   }
+
+  public dateDiff = (start, end) => {
+    end = new Date(end);
+    start = new Date(start);
+    const daysDifference =
+      Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
+
+    return daysDifference;
+  };
 
   // Admin can get all leave requests
   public getAll = async (req: Request, res: Response): Promise<void> => {
@@ -91,7 +103,20 @@ export class LeaveController {
         req.signedInUser.role.id === 1 ||
         user.manager?.id === req.signedInUser.uid
       ) {
+        let date = new Date();
+
         leave.status = req.body.status;
+        leave.updatedAt = date;
+
+        if (leave.status === "rejected") {
+          const daysDifference = this.dateDiff(
+            leave.endDate,
+            leave.startDate
+          );
+
+          const newRemainingAl = leave.user.remainingAl + daysDifference;
+          leave.user.remainingAl = newRemainingAl;
+        } 
 
         ResponseHandler.sendSuccessResponse(res, leave, StatusCodes.ACCEPTED);
       } else {
@@ -148,11 +173,31 @@ export class LeaveController {
       leaveRequest.createdAt = date;
       leaveRequest.startDate = req.body.startDate;
       leaveRequest.endDate = req.body.endDate;
-      console.log(leaveRequest);
 
       if (req.body.reason) {
         leaveRequest.reason = req.body.reason;
       }
+
+      const daysDifference = this.dateDiff(
+        leaveRequest.endDate,
+        leaveRequest.startDate
+      );
+
+      const newRemainingAl = leaveRequest.user.remainingAl - daysDifference;
+
+      // Check remaining al is not negative
+      if (newRemainingAl < 0) {
+        ResponseHandler.sendErrorResponse(
+          res,
+          StatusCodes.BAD_REQUEST,
+          LeaveController.ERROR_LEAVE_EXCEEDS_AL
+        );
+      }
+
+      // Update remaining leave
+      leaveRequest.user.remainingAl = newRemainingAl;
+      await this.userRepository.save(leaveRequest.user);
+
       leaveRequest = await this.leaveRepository.save(leaveRequest);
 
       ResponseHandler.sendSuccessResponse(
@@ -181,7 +226,7 @@ export class LeaveController {
         where: { leaveId: id },
         relations: ["user"],
       });
-      console.log(leaveRequest.user.id, ":", req.signedInUser.uid);
+
       if (leaveRequest.user.id !== req.signedInUser.uid) {
         ResponseHandler.sendErrorResponse(
           res,
@@ -189,11 +234,20 @@ export class LeaveController {
           LeaveController.ERROR_UNAUTHORIZED_ACTION
         );
       } else {
+        const daysDifference = this.dateDiff(
+          leaveRequest.endDate,
+          leaveRequest.startDate
+        );
+
+        const newRemainingAl = leaveRequest.user.remainingAl + daysDifference;
+        leaveRequest.user.remainingAl = newRemainingAl;
+
         const result = await this.leaveRepository.delete(id);
         if (result.affected === 0) {
           throw new Error(LeaveController.ERROR_LEAVE_NOT_FOUND_FOR_DELETION);
         }
       }
+      
       ResponseHandler.sendSuccessResponse(
         res,
         "Leave request deleted",
