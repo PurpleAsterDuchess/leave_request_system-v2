@@ -336,7 +336,7 @@ describe("RoleController", () => {
     );
   });
 
-  it.only("update returns a BAD_REQUEST if no id is provided", async () => {
+  it("update returns a BAD_REQUEST if no id is provided", async () => {
     const validManagerDetails = getValidManagerData();
     const req = mockRequest({}, { name: validManagerDetails.name }); //Invalid/no id
     const res = mockResponse();

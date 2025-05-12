@@ -5,8 +5,10 @@ import { Repository } from "typeorm";
 import { StatusCodes } from "http-status-codes";
 import { ResponseHandler } from "../helper/ResponseHandler";
 import { validate } from "class-validator";
+import { AppError } from "../helper/AppError";
+import { IEntityController } from "./IEntityControllers";
 
-export class RoleController {
+export class RoleController implements IEntityController{
   public static readonly ERROR_NO_ID_PROVIDED = "No ID provided";
   public static readonly ERROR_INVALID_ID_FORMAT = "Invalid ID format";
   public static readonly ERROR_ROLE_NOT_FOUND = "Role not found";
@@ -88,7 +90,7 @@ export class RoleController {
       const errors = await validate(role);
       console.log("e: ", errors);
       if (errors.length > 0) {
-        throw new Error(
+        throw new AppError(
           errors
             .map((e) => Object.values(e.constraints || {}))
             .flat()
@@ -113,11 +115,11 @@ export class RoleController {
     const id = req.params.id;
     try {
       if (!id) {
-        throw new Error(RoleController.ERROR_NO_ID_PROVIDED);
+        throw new AppError(RoleController.ERROR_NO_ID_PROVIDED);
       }
       const result = await this.roleRepository.delete(id);
       if (result.affected === 0) {
-        throw new Error(RoleController.ERROR_ROLE_NOT_FOUND_FOR_DELETION);
+        throw new AppError(RoleController.ERROR_ROLE_NOT_FOUND_FOR_DELETION);
       }
       ResponseHandler.sendSuccessResponse(res, "Role deleted");
     } catch (error: any) {
@@ -133,17 +135,17 @@ export class RoleController {
     const id = req.body.id;
     try {
       if (!id) {
-        throw new Error(RoleController.ERROR_NO_ID_PROVIDED);
+        throw new AppError(RoleController.ERROR_NO_ID_PROVIDED);
       }
       let role = await this.roleRepository.findOneBy({ id });
       if (!role) {
-        throw new Error(RoleController.ERROR_ROLE_NOT_FOUND);
+        throw new AppError(RoleController.ERROR_ROLE_NOT_FOUND);
       }
       // Update specific fields
       role.name = req.body.name;
       const errors = await validate(role);
       if (errors.length > 0) {
-        throw new Error(
+        throw new AppError(
           errors
             .map((e) => Object.values(e.constraints || {}))
             .flat()

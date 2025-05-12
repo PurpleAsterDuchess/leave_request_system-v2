@@ -1,13 +1,17 @@
 import { Router } from "express";
 import { RoleController } from "../controllers/RoleController";
+import { IRouter } from "./IRouter";
+import { IEntityController } from "../controllers/IEntityControllers";
 
-export class RoleRouter {
-  private router: Router;
-  private roleController: RoleController;
+export class RoleRouter implements IRouter {
+  public routeName = "roles";
+  public basePath = "/api/roles";
+  public authenticate = true;
 
-  constructor(router: Router, roleController: RoleController) {
-    this.router = router;
-    this.roleController = roleController;
+  constructor(
+    private router: Router,
+    private roleController: IEntityController
+  ) {
     this.addRoutes();
   }
   public getRouter(): Router {

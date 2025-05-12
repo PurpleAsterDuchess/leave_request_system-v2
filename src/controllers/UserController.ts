@@ -7,8 +7,10 @@ import { StatusCodes } from "http-status-codes";
 import { validate } from "class-validator";
 import { instanceToPlain } from "class-transformer";
 import { Role } from "../entity/Role";
+import { AppError } from "../helper/AppError";
+import { IGetByEmail } from "../controllers/IGetByEmail";
 
-export class UserController {
+export class UserController implements IGetByEmail{
   public static readonly ERROR_NO_USER_ID_PROVIDED = "No ID provided";
   public static readonly ERROR_INVALID_USER_ID_FORMAT = "Invalid ID format";
   public static readonly ERROR_USER_NOT_FOUND = "User not found";
@@ -41,7 +43,7 @@ export class UserController {
   // Allow reset of AL
   async resetAnnualLeave(uid: number): Promise<void> {
     const user = await this.userRepository.findOneBy({ id: uid });
-    if (!user) throw new Error("User not found");
+    if (!user) throw new AppError("User not found");
 
     user.remainingAl = user.initialAlTotal;
     await this.userRepository.save(user);
@@ -152,6 +154,7 @@ export class UserController {
       user.firstname = req.body.firstname;
       user.surname = req.body.surname;
 
+      // Create functionality so manager cannot be user
       if (req.body.manager !== undefined) {
         user.manager = req.body.manager;
       }
@@ -167,7 +170,7 @@ export class UserController {
       const errors = await validate(user);
       if (errors.length > 0) {
         //Collate a string of all decorator error messages
-        throw new Error(
+        throw new AppError(
           errors.map((err) => Object.values(err.constraints || {})).join(", ")
         );
       }
@@ -192,11 +195,11 @@ export class UserController {
     const id = req.params.id;
     try {
       if (!id) {
-        throw new Error("No ID provided");
+        throw new AppError("No ID provided");
       }
       const result = await this.userRepository.delete(id);
       if (result.affected === 0) {
-        throw new Error("User with the provided ID not found");
+        throw new AppError("User with the provided ID not found");
       }
       ResponseHandler.sendSuccessResponse(res, "User deleted", StatusCodes.OK);
     } catch (error: any) {
@@ -214,7 +217,7 @@ export class UserController {
 
     try {
       if (!id) {
-        throw new Error(UserController.ERROR_NO_USER_ID_PROVIDED);
+        throw new AppError(UserController.ERROR_NO_USER_ID_PROVIDED);
       }
 
       let user = await this.userRepository.findOne({
@@ -223,7 +226,7 @@ export class UserController {
       });
 
       if (!user) {
-        throw new Error(UserController.ERROR_USER_NOT_FOUND);
+        throw new AppError(UserController.ERROR_USER_NOT_FOUND);
       }
 
       // Update specific fields
@@ -235,7 +238,7 @@ export class UserController {
         const role = await this.roleRepository.findOneBy({
           id: req.body.roleId,
         });
-        if (!role) throw new Error("Invalid role ID.");
+        if (!role) throw new AppError("Invalid role ID.");
         user.role = role;
       }
 
@@ -243,7 +246,7 @@ export class UserController {
         const manager = await this.userRepository.findOneBy({
           id: req.body.managerId,
         });
-        if (!manager) throw new Error("Invalid manager ID.");
+        if (!manager) throw new AppError("Invalid manager ID.");
         user.manager = manager;
       }
 
@@ -258,7 +261,7 @@ export class UserController {
       const errors = await validate(user);
       if (errors.length > 0) {
         //Collate a string of all decorator error messages
-        throw new Error(
+        throw new AppError(
           errors
             .map((e) => Object.values(e.constraints || {}))
             .flat()

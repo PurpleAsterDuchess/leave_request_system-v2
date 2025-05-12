@@ -1,10 +1,16 @@
 import { Router } from "express"; // Correctly import Router
 import { UserController } from "../controllers/UserController";
+import { IRouter } from "./IRouter";
+import { IGetByEmail } from "../controllers/IGetByEmail";
 
-export class UserRouter {
+export class UserRouter implements IRouter{
+  public routeName = "users";
+  public basePath = "/api/users";
+  public authenticate = true;
+
   constructor(
     private router: Router,
-    private userController: UserController
+    private userController: IGetByEmail
   ) {
     this.router = router;
     this.addRoutes();
@@ -22,7 +28,7 @@ export class UserRouter {
 
     // Post
     this.router.post("/", this.userController.create);
-    
+
     // Delete
     this.router.delete("/:id", this.userController.delete);
 

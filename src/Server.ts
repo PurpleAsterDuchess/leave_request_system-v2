@@ -12,6 +12,9 @@ import { Logger } from "./helper/Logger";
 import morgan, { StreamOptions } from "morgan";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
+import { IRouter } from "./routes/IRouter";
+import { ErrorHandler } from "./helper/ErrorHandler";
+import { MiddlewareFactory } from "./helper/MiddlewareFactory";
 
 export class Server {
   private readonly app: express.Application;
@@ -43,10 +46,7 @@ export class Server {
 
   constructor(
     private readonly port: string | number,
-    private readonly loginRouter: LoginRouter,
-    private readonly roleRouter: RoleRouter,
-    private readonly userRouter: UserRouter,
-    private readonly leaveRouter: LeaveRouter,
+    private readonly routers: IRouter[],
     private readonly appDataSource: DataSource
   ) {
     this.app = express();
@@ -68,48 +68,32 @@ export class Server {
   }
 
   private initialiseRoutes() {
-    this.app.use(
-      "/api/login",
-      this.loginLimiter,
-      this.logRouteAccess("Login route"),
-      this.loginRouter.getRouter()
-    );
-    this.app.use(
-      "/api/roles",
-      this.authenticateToken,
-      this.logRouteAccess("Roles route"),
-      this.jwtRateLimitMiddleware("roles"),
-      this.roleRouter.getRouter()
-    );
-    this.app.use(
-      "/api/users",
-      this.authenticateToken,
-      this.logRouteAccess("Users route"),
-      this.jwtRateLimitMiddleware("users"),
-      this.userRouter.getRouter()
-    );
-    this.app.use(
-      "/api/leave",
-      this.authenticateToken,
-      this.logRouteAccess("Leave route"),
-      this.jwtRateLimitMiddleware("leave"),
-      this.leaveRouter.getRouter()
-    );
+    for (const route of this.routers) {
+      const middlewares: express.RequestHandler[] = []
+
+      if (route.authenticate) {
+        middlewares.push(MiddlewareFactory.authenticateToken)
+      }
+
+      if (route.basePath === "/api/login") {
+        middlewares.push(MiddlewareFactory.loginLimiter);
+      } else {
+        middlewares.push(MiddlewareFactory.jwtRateLimitMiddleware(route.routeName))
+      }
+
+      middlewares.push(MiddlewareFactory.logRouteAccess(route.routeName))
+
+      this.app.use(route.basePath, ...middlewares, route.getRouter())
+    }
+    
   }
 
   private initialiseErrorHandling() {
     //  this was this.app.get("*", ..) but it's been changed because we are using express 5
-    this.app.use("/", (e: Error, req: Request, res: Response) => {
-      const requestedUrl = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
-
-      Logger.error(`Error occurred: ${e.message} at ${req.originalUrl}`);
-
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.NOT_FOUND,
-        "Route " + requestedUrl + " not found"
-      );
+    this.app.use((err, req, res, next) => {
+      ErrorHandler.handle(err, res);
     });
+
   }
 
   public async start() {

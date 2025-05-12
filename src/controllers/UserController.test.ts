@@ -34,7 +34,7 @@ jest.mock("class-transformer", () => ({
 describe("UserController", () => {
   function getValidManagerData(): User {
     let role = new Role();
-    role.id = 1;
+    role.id = 2;
     role.name = "manager";
     let user = new User();
     user.id = 1;
@@ -45,13 +45,14 @@ describe("UserController", () => {
   }
   function getValidStaffData(): User {
     let role = new Role();
-    role.id = 2;
+    role.id = 3;
     role.name = "staff";
     let user = new User();
-    user.id = 1;
+    user.id = 2;
     user.password = "b".repeat(10);
     user.email = "staff@email.com";
     user.role = role;
+    user.manager = getValidManagerData();
     return user;
   }
 
@@ -79,7 +80,8 @@ describe("UserController", () => {
     // Arrange
     const req = mockRequest();
     const res = mockResponse();
-    mockUserRepository.find.mockResolvedValue([]); //Simulate no users in the database
+    //Simulate no users in the database
+    mockUserRepository.find.mockResolvedValue([]);
 
     // Act
     await userController.getAll(req as Request, res as Response);
@@ -122,9 +124,13 @@ describe("UserController", () => {
     await userController.getAll(req as Request, res as Response);
 
     // Assert
-    expect(mockUserRepository.find).toHaveBeenCalledWith({
-      relations: ["role"],
-    });
+    expect(mockUserRepository.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        relations: expect.arrayContaining(["role", "manager"]),
+      })
+    );
+
+
     expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(
       res,
       mockUsers
@@ -360,7 +366,7 @@ describe("UserController", () => {
       { id: validManagerDetails.id, name: BLANK_USER_NAME }
     );
     const res = mockResponse();
-    mockUserRepository.findOneBy.mockResolvedValue(validManagerDetails);
+    mockUserRepository.findOne.mockResolvedValue(validManagerDetails);
     const EXPECTED_ERROR_MESSAGE = `${VALIDATOR_CONSTRAINT_INVALID_ID}, ${VALIDATOR_CONSTRAINT_EMPTY_OR_WHITESPACE}, ${VALIDATOR_CONSTRAINT_MAX_LENGTH_EXCEEDED}`;
     jest.spyOn(classValidator, "validate").mockResolvedValue([
       {
@@ -377,9 +383,13 @@ describe("UserController", () => {
     await userController.update(req as Request, res as Response);
 
     // Assert
-    expect(mockUserRepository.findOneBy).toHaveBeenCalledWith({
-      id: validManagerDetails.id,
+    expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+      where: {
+        id: validManagerDetails.id,
+      },
+      relations: ["manager", "role"],
     });
+
     expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
       res,
       StatusCodes.BAD_REQUEST,
