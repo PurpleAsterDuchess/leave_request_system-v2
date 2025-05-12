@@ -26,24 +26,6 @@ export class Server {
   public static readonly ERROR_TOKEN_SECRET_NOT_DEFINED =
     "Secret token not defined";
 
-  private readonly loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // max requests per window
-    message: "Too many requests - try again later",
-    standardHeaders: true, // Return Rate limit info in the RateLimit-* headers
-    legacyHeaders: false, // Disable the X-RateLimit-* headers
-  });
-
-  private readonly jwtRateLimiter = (userEmail: string) =>
-    rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 20, // max requests per window
-      message: "Too many requests - try again later",
-      standardHeaders: true, // Return Rate limit info in the RateLimit-* headers
-      legacyHeaders: false, // Disable the X-RateLimit-* headers
-      keyGenerator: (req) => userEmail,
-    });
-
   constructor(
     private readonly port: string | number,
     private readonly routers: IRouter[],
@@ -69,23 +51,24 @@ export class Server {
 
   private initialiseRoutes() {
     for (const route of this.routers) {
-      const middlewares: express.RequestHandler[] = []
+      const middlewares: express.RequestHandler[] = [];
 
       if (route.authenticate) {
-        middlewares.push(MiddlewareFactory.authenticateToken)
+        middlewares.push(MiddlewareFactory.authenticateToken);
       }
 
       if (route.basePath === "/api/login") {
-        middlewares.push(MiddlewareFactory.loginLimiter);
+        middlewares.push(MiddlewareFactory.loginLimiter());
       } else {
-        middlewares.push(MiddlewareFactory.jwtRateLimitMiddleware(route.routeName))
+        middlewares.push(
+          MiddlewareFactory.jwtRateLimitMiddleware(route.routeName)
+        );
       }
 
-      middlewares.push(MiddlewareFactory.logRouteAccess(route.routeName))
+      middlewares.push(MiddlewareFactory.logRouteAccess(route.routeName));
 
-      this.app.use(route.basePath, ...middlewares, route.getRouter())
+      this.app.use(route.basePath, ...middlewares, route.getRouter());
     }
-    
   }
 
   private initialiseErrorHandling() {
@@ -93,7 +76,6 @@ export class Server {
     this.app.use((err, req, res, next) => {
       ErrorHandler.handle(err, res);
     });
-
   }
 
   public async start() {
@@ -111,75 +93,5 @@ export class Server {
       Logger.error("Error during initialisation:", error);
       throw error;
     }
-  }
-  private authenticateToken(req: Request, res: Response, next: NextFunction) {
-    const authHeader = req.headers.authorization;
-    if (authHeader) {
-      const tokenReceived = authHeader.split(" ")[1];
-
-      if (!process.env.JWT_SECRET) {
-        //added
-        Logger.error(Server.ERROR_TOKEN_SECRET_NOT_DEFINED);
-        throw new Error(Server.ERROR_TOKEN_SECRET_NOT_DEFINED);
-      }
-
-      jwt.verify(tokenReceived, process.env.JWT_SECRET, (err, payload) => {
-        if (err) {
-          Logger.error(Server.ERROR_TOKEN_IS_INVALID);
-          return ResponseHandler.sendErrorResponse(
-            res,
-            StatusCodes.UNAUTHORIZED,
-            Server.ERROR_TOKEN_IS_INVALID
-          );
-        }
-
-        const {
-          token: { email, role, uid },
-        } = payload as any;
-
-        if (!email || !role) {
-          Logger.error(Server.ERROR_TOKEN_IS_INVALID);
-          return ResponseHandler.sendErrorResponse(
-            res,
-            StatusCodes.UNAUTHORIZED,
-            Server.ERROR_TOKEN_IS_INVALID
-          );
-        }
-
-        req.signedInUser = { email, role, uid };
-        next();
-      });
-    } else {
-      Logger.error(Server.ERROR_TOKEN_NOT_FOUND);
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.UNAUTHORIZED,
-        Server.ERROR_TOKEN_NOT_FOUND
-      );
-    }
-  }
-  private logRouteAccess(route: string) {
-    return (req: Request, res: Response, next: NextFunction) => {
-      Logger.info(`${route} accessed by ${req.ip}`);
-      next();
-    };
-  }
-  private jwtRateLimitMiddleware(route: string) {
-    return (req: Request, res: Response, next: NextFunction) => {
-      const email = req.signedInUser?.email;
-
-      if (email) {
-        Logger.info(`${route} accessed by ${req.ip}`);
-        this.jwtRateLimiter(email)(req, res, next);
-      } else {
-        const ERROR_MESSAGE = "Missing essential information in JWT";
-        Logger.error(ERROR_MESSAGE);
-        ResponseHandler.sendErrorResponse(
-          res,
-          StatusCodes.BAD_REQUEST,
-          ERROR_MESSAGE
-        );
-      }
-    };
   }
 }
