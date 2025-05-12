@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { RoleController } from "../controllers/RoleController";
 import { IRouter } from "./IRouter";
 import { IEntityController } from "../controllers/IEntityControllers";
 

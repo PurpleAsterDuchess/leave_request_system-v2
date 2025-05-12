@@ -1,9 +1,9 @@
-import { Router } from "express"; // Correctly import Router
+import { Router } from "express";
 import { UserController } from "../controllers/UserController";
 import { IRouter } from "./IRouter";
 import { IGetByEmail } from "../controllers/IGetByEmail";
 
-export class UserRouter implements IRouter{
+export class UserRouter implements IRouter {
   public routeName = "users";
   public basePath = "/api/users";
   public authenticate = true;
@@ -12,7 +12,6 @@ export class UserRouter implements IRouter{
     private router: Router,
     private userController: IGetByEmail
   ) {
-    this.router = router;
     this.addRoutes();
   }
 

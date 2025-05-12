@@ -8,7 +8,7 @@ import { validate } from "class-validator";
 import { AppError } from "../helper/AppError";
 import { IEntityController } from "./IEntityControllers";
 
-export class RoleController implements IEntityController{
+export class RoleController implements IEntityController {
   public static readonly ERROR_NO_ID_PROVIDED = "No ID provided";
   public static readonly ERROR_INVALID_ID_FORMAT = "Invalid ID format";
   public static readonly ERROR_ROLE_NOT_FOUND = "Role not found";
@@ -30,22 +30,14 @@ export class RoleController implements IEntityController{
 
   // Get all roles
   public getAll = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const roles = await this.roleRepository.find();
+    const roles = await this.roleRepository.find();
 
-      if (roles.length === 0) {
-        ResponseHandler.sendErrorResponse(res, StatusCodes.NO_CONTENT);
-        return;
-      }
-
-      ResponseHandler.sendSuccessResponse(res, roles);
-    } catch (error) {
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        RoleController.ERROR_FAILED_TO_RETRIEVE_ROLES
-      );
+    if (roles.length === 0) {
+      ResponseHandler.sendErrorResponse(res, StatusCodes.NO_CONTENT);
+      return;
     }
+
+    ResponseHandler.sendSuccessResponse(res, roles);
   };
 
   // Get Role by ID
@@ -61,105 +53,76 @@ export class RoleController implements IEntityController{
       return;
     }
 
-    try {
-      const role = await this.roleRepository.findOne({ where: { id: id } });
-      if (!role) {
-        ResponseHandler.sendErrorResponse(
-          res,
-          StatusCodes.NOT_FOUND,
-          RoleController.ERROR_ROLE_NOT_FOUND_WITH_ID(id)
-        );
-        return;
-      }
-
-      ResponseHandler.sendSuccessResponse(res, role);
-    } catch (error) {
+    const role = await this.roleRepository.findOne({ where: { id: id } });
+    if (!role) {
       ResponseHandler.sendErrorResponse(
         res,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        RoleController.ERROR_FAILED_TO_RETRIEVE_ROLE
+        StatusCodes.NOT_FOUND,
+        RoleController.ERROR_ROLE_NOT_FOUND_WITH_ID(id)
       );
+      return;
     }
+
+    ResponseHandler.sendSuccessResponse(res, role);
   };
 
   public create = async (req: Request, res: Response): Promise<void> => {
-    try {
-      let role = new Role();
-      // role.name = req.body.data.name;
-      role.name = req.body.name;
-      const errors = await validate(role);
-      console.log("e: ", errors);
-      if (errors.length > 0) {
-        throw new AppError(
-          errors
-            .map((e) => Object.values(e.constraints || {}))
-            .flat()
-            .join(", ")
-        );
-      }
-
-      // Save and return the created object
-      role = await this.roleRepository.save(role);
-      ResponseHandler.sendSuccessResponse(res, role, StatusCodes.CREATED);
-    } catch (error: any) {
-      // Handle all possible error types (e.g. validation errors)
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.BAD_REQUEST,
-        error.message
+    let role = new Role();
+    // role.name = req.body.data.name;
+    role.name = req.body.name;
+    const errors = await validate(role);
+    console.log("e: ", errors);
+    if (errors.length > 0) {
+      throw new AppError(
+        errors
+          .map((e) => Object.values(e.constraints || {}))
+          .flat()
+          .join(", ")
       );
     }
+
+    // Save and return the created object
+    role = await this.roleRepository.save(role);
+    ResponseHandler.sendSuccessResponse(res, role, StatusCodes.CREATED);
   };
 
   public delete = async (req: Request, res: Response): Promise<void> => {
     const id = req.params.id;
-    try {
-      if (!id) {
-        throw new AppError(RoleController.ERROR_NO_ID_PROVIDED);
-      }
-      const result = await this.roleRepository.delete(id);
-      if (result.affected === 0) {
-        throw new AppError(RoleController.ERROR_ROLE_NOT_FOUND_FOR_DELETION);
-      }
-      ResponseHandler.sendSuccessResponse(res, "Role deleted");
-    } catch (error: any) {
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.NOT_FOUND,
-        error.message
-      );
+
+    if (!id) {
+      throw new AppError(RoleController.ERROR_NO_ID_PROVIDED);
     }
+    const result = await this.roleRepository.delete(id);
+    if (result.affected === 0) {
+      throw new AppError(RoleController.ERROR_ROLE_NOT_FOUND_FOR_DELETION);
+    }
+
+    ResponseHandler.sendSuccessResponse(res, "Role deleted");
   };
 
   public update = async (req: Request, res: Response): Promise<void> => {
     const id = req.body.id;
-    try {
-      if (!id) {
-        throw new AppError(RoleController.ERROR_NO_ID_PROVIDED);
-      }
-      let role = await this.roleRepository.findOneBy({ id });
-      if (!role) {
-        throw new AppError(RoleController.ERROR_ROLE_NOT_FOUND);
-      }
-      // Update specific fields
-      role.name = req.body.name;
-      const errors = await validate(role);
-      if (errors.length > 0) {
-        throw new AppError(
-          errors
-            .map((e) => Object.values(e.constraints || {}))
-            .flat()
-            .join(", ")
-        );
-      }
-      role = await this.roleRepository.save(role);
-      ResponseHandler.sendSuccessResponse(res, role);
-    } catch (error: any) {
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.BAD_REQUEST,
-        error.message
+
+    if (!id) {
+      throw new AppError(RoleController.ERROR_NO_ID_PROVIDED);
+    }
+    let role = await this.roleRepository.findOneBy({ id });
+    if (!role) {
+      throw new AppError(RoleController.ERROR_ROLE_NOT_FOUND);
+    }
+    // Update specific fields
+    role.name = req.body.name;
+    const errors = await validate(role);
+    if (errors.length > 0) {
+      throw new AppError(
+        errors
+          .map((e) => Object.values(e.constraints || {}))
+          .flat()
+          .join(", ")
       );
     }
+    role = await this.roleRepository.save(role);
+
+    ResponseHandler.sendSuccessResponse(res, role);
   };
 }

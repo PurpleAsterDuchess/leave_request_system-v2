@@ -7,8 +7,11 @@ import { StatusCodes } from "http-status-codes";
 import { PasswordHandler } from "../helper/PasswordHandler";
 import { UserDTOToken } from "./UserDTOToken";
 import jwt from "jsonwebtoken";
-import { ILoginController } from "./ILoginController";
 import { AppError } from "../helper/AppError";
+
+export interface ILoginController {
+  login(req: Request, res: Response): Promise<void>;
+}
 
 export class LoginController implements ILoginController {
   public static readonly ERROR_NO_EMAIL_PROVIDED = "No email provided";

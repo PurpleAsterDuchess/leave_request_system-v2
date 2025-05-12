@@ -8,9 +8,9 @@ import { validate } from "class-validator";
 import { instanceToPlain } from "class-transformer";
 import { Role } from "../entity/Role";
 import { AppError } from "../helper/AppError";
-import { IGetByEmail } from "../controllers/IGetByEmail";
+import { IEntityController } from "./IEntityControllers";
 
-export class UserController implements IGetByEmail{
+export class UserController implements IEntityController {
   public static readonly ERROR_NO_USER_ID_PROVIDED = "No ID provided";
   public static readonly ERROR_INVALID_USER_ID_FORMAT = "Invalid ID format";
   public static readonly ERROR_USER_NOT_FOUND = "User not found";
@@ -51,24 +51,15 @@ export class UserController implements IGetByEmail{
 
   // Get all users
   public getAll = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const users = await this.userRepository.find({
-        relations: ["manager", "role"], // Include all  role fields in response
-      });
+    const users = await this.userRepository.find({
+      relations: ["manager", "role"], // Include all  role fields in response
+    });
 
-      if (users.length === 0) {
-        ResponseHandler.sendErrorResponse(res, StatusCodes.NO_CONTENT);
-        return;
-      }
-
-      ResponseHandler.sendSuccessResponse(res, users);
-    } catch (error) {
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        `${UserController.ERROR_FAILED_TO_RETRIEVE_USERS}: ${error.message}`
-      );
+    if (users.length === 0) {
+      ResponseHandler.sendErrorResponse(res, StatusCodes.NO_CONTENT);
     }
+
+    ResponseHandler.sendSuccessResponse(res, users);
   };
 
   public getByEmail = async (req: Request, res: Response): Promise<void> => {
@@ -83,28 +74,20 @@ export class UserController implements IGetByEmail{
       return;
     }
 
-    try {
-      const user = await this.userRepository.findOne({
-        where: { email: email },
-        relations: ["role"],
-      });
-      if (!user) {
-        ResponseHandler.sendErrorResponse(
-          res,
-          StatusCodes.BAD_REQUEST,
-          `${email} not found`
-        );
-        return;
-      }
-
-      ResponseHandler.sendSuccessResponse(res, user);
-    } catch (error) {
+    const user = await this.userRepository.findOne({
+      where: { email: email },
+      relations: ["role"],
+    });
+    if (!user) {
       ResponseHandler.sendErrorResponse(
         res,
         StatusCodes.BAD_REQUEST,
-        UserController.ERROR_UNABLE_TO_FIND_USER_EMAIL(email)
+        `${email} not found`
       );
+      return;
     }
+
+    ResponseHandler.sendSuccessResponse(res, user);
   };
 
   public getById = async (req: Request, res: Response): Promise<void> => {
@@ -118,7 +101,6 @@ export class UserController implements IGetByEmail{
       return;
     }
 
-    try {
       const user = await this.userRepository.findOne({
         where: { id: id },
         relations: ["role"],
@@ -133,17 +115,9 @@ export class UserController implements IGetByEmail{
       }
 
       ResponseHandler.sendSuccessResponse(res, user);
-    } catch (error) {
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.BAD_REQUEST,
-        UserController.ERROR_RETRIEVING_USER(error.message)
-      );
-    }
   };
 
   public create = async (req: Request, res: Response): Promise<void> => {
-    try {
       let user = new User();
 
       //Will be salted and hashed in the entity
@@ -182,18 +156,11 @@ export class UserController implements IGetByEmail{
         instanceToPlain(user),
         StatusCodes.CREATED
       );
-    } catch (error: any) {
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.BAD_REQUEST,
-        error.message
-      );
-    }
+
   };
 
   public delete = async (req: Request, res: Response): Promise<void> => {
     const id = req.params.id;
-    try {
       if (!id) {
         throw new AppError("No ID provided");
       }
@@ -201,21 +168,13 @@ export class UserController implements IGetByEmail{
       if (result.affected === 0) {
         throw new AppError("User with the provided ID not found");
       }
+
       ResponseHandler.sendSuccessResponse(res, "User deleted", StatusCodes.OK);
-    } catch (error: any) {
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.NOT_FOUND,
-        error.message
-      );
-    }
   };
 
   public update = async (req: Request, res: Response): Promise<void> => {
-    console.log("req.body:", req.body);
     const id = req.body.id;
 
-    try {
       if (!id) {
         throw new AppError(UserController.ERROR_NO_USER_ID_PROVIDED);
       }
@@ -272,12 +231,5 @@ export class UserController implements IGetByEmail{
       user = await this.userRepository.save(user);
 
       ResponseHandler.sendSuccessResponse(res, user, StatusCodes.OK);
-    } catch (error: any) {
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.BAD_REQUEST,
-        error.message
-      );
     }
-  };
 }

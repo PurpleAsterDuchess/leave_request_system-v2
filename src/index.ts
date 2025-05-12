@@ -31,9 +31,5 @@ const routers = [
 ];
 
 // Instantiate/start the server
-const server = new Server(
-  port,
-  routers,
-  appDataSource
-);
+const server = new Server(port, routers, appDataSource);
 server.start();
