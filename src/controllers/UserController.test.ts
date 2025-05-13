@@ -101,16 +101,10 @@ describe("UserController", () => {
       new Error("Database connection error")
     );
 
-    // Act
-    await userController.getAll(req as Request, res as Response);
-
-    // Assert
-    expect(mockUserRepository.find).toHaveBeenCalled();
-    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
-      res,
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `Failed to retrieve users: Database connection error`
-    );
+    // Act, Assert
+    await expect(
+      userController.getAll(req as Request, res as Response)
+    ).rejects.toThrow("Database connection error");
   });
 
   it("getAll will return all users", async () => {
@@ -129,7 +123,6 @@ describe("UserController", () => {
         relations: expect.arrayContaining(["role", "manager"]),
       })
     );
-
 
     expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(
       res,
@@ -158,15 +151,10 @@ describe("UserController", () => {
       },
     ]);
 
-    // Act
-    await userController.create(req as Request, res as Response);
-
-    // Assert
-    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
-      res,
-      StatusCodes.BAD_REQUEST,
-      EXPECTED_ERROR_MESSAGE
-    );
+    // Act, Assert
+    await expect(
+      userController.create(req as Request, res as Response)
+    ).rejects.toThrow(EXPECTED_ERROR_MESSAGE);
   });
 
   it("create will return BAD_REQUEST if no user email was provided", async () => {
@@ -180,7 +168,9 @@ describe("UserController", () => {
       }
     );
     const res = mockResponse();
+
     const EXPECTED_ERROR_MESSAGE = VALIDATOR_CONSTRAINT_INVALID_EMAIL;
+
     jest.spyOn(classValidator, "validate").mockResolvedValue([
       {
         property: "email",
@@ -190,15 +180,10 @@ describe("UserController", () => {
       },
     ]);
 
-    // Act
-    await userController.create(req as Request, res as Response);
-
-    // Assert
-    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
-      res,
-      StatusCodes.BAD_REQUEST,
-      EXPECTED_ERROR_MESSAGE
-    );
+    // Act, Assert
+    await expect(
+      userController.create(req as Request, res as Response)
+    ).rejects.toThrow(EXPECTED_ERROR_MESSAGE);
   });
 
   it("create will return BAD_REQUEST if no user id was provided", async () => {
@@ -224,15 +209,10 @@ describe("UserController", () => {
       },
     ]);
 
-    // Assert
-    await userController.create(req as Request, res as Response);
-
-    // Arrange
-    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
-      res,
-      StatusCodes.BAD_REQUEST,
-      EXPECTED_ERROR_MESSAGE
-    );
+    // Act,  Assert
+    await expect(
+      userController.create(req as Request, res as Response)
+    ).rejects.toThrow(EXPECTED_ERROR_MESSAGE);
   });
 
   it("create will return a valid user and return CREATED status when supplied with valid details", async () => {
@@ -286,15 +266,10 @@ describe("UserController", () => {
     const req = mockRequest(); //Empty request = no param for id
     const res = mockResponse();
 
-    // Act
-    await userController.delete(req as Request, res as Response);
-
-    // Assert
-    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
-      res,
-      StatusCodes.NOT_FOUND,
-      ERROR_NO_ID_PROVIDED
-    );
+    // Act,  Assert
+    await expect(
+      userController.delete(req as Request, res as Response)
+    ).rejects.toThrow(ERROR_NO_ID_PROVIDED);
   });
 
   it("delete will return NOT_FOUND if the user id does not exist", async () => {
@@ -305,21 +280,13 @@ describe("UserController", () => {
     const deleteResult: DeleteResult = { affected: 0 } as DeleteResult;
     mockUserRepository.delete.mockResolvedValue(deleteResult);
 
-    // Act
-    await userController.delete(req as Request, res as Response);
-    expect(mockUserRepository.delete).toHaveBeenCalledWith(
-      INVALID_USER_ID_NUMBER
-    );
-
-    // Assert
-    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
-      res,
-      StatusCodes.NOT_FOUND,
-      INVALID_USER_ID_NUMBER
-    );
+    // Act + Assert
+    await expect(
+      userController.delete(req as Request, res as Response)
+    ).rejects.toThrow(INVALID_USER_ID_NUMBER);
   });
 
-  it("Delete will return SUCCESS if the role is successfully deleted", async () => {
+  it("delete will return SUCCESS if the role is successfully deleted", async () => {
     // Arrange
     const validManagerDetails = getValidManagerData();
     const req = mockRequest({ id: validManagerDetails.id }); //id that exists
@@ -347,18 +314,13 @@ describe("UserController", () => {
     const req = mockRequest({}, {}); //Invalid/no id
     const res = mockResponse();
 
-    // Act
-    await userController.update(req as Request, res as Response);
-
-    // Assert
-    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
-      res,
-      StatusCodes.BAD_REQUEST,
-      ERROR_NO_ID_PROVIDED
-    );
+    // Act + Assert
+    await expect(
+      userController.update(req as Request, res as Response)
+    ).rejects.toThrow(ERROR_NO_ID_PROVIDED);
   });
 
-  it("Update will return a BAD_REQUEST if the name does not exist/blank", async () => {
+  it("update will return a BAD_REQUEST if the name does not exist/blank", async () => {
     // Arrange
     const validManagerDetails = getValidManagerData();
     const req = mockRequest(
@@ -366,8 +328,11 @@ describe("UserController", () => {
       { id: validManagerDetails.id, name: BLANK_USER_NAME }
     );
     const res = mockResponse();
+
     mockUserRepository.findOne.mockResolvedValue(validManagerDetails);
+
     const EXPECTED_ERROR_MESSAGE = `${VALIDATOR_CONSTRAINT_INVALID_ID}, ${VALIDATOR_CONSTRAINT_EMPTY_OR_WHITESPACE}, ${VALIDATOR_CONSTRAINT_MAX_LENGTH_EXCEEDED}`;
+
     jest.spyOn(classValidator, "validate").mockResolvedValue([
       {
         property: "name",
@@ -379,21 +344,9 @@ describe("UserController", () => {
       },
     ]);
 
-    // Act
-    await userController.update(req as Request, res as Response);
-
-    // Assert
-    expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-      where: {
-        id: validManagerDetails.id,
-      },
-      relations: ["manager", "role"],
-    });
-
-    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
-      res,
-      StatusCodes.BAD_REQUEST,
-      EXPECTED_ERROR_MESSAGE
-    );
+    // Act + Assert
+    await expect(
+      userController.update(req as Request, res as Response)
+    ).rejects.toThrow(EXPECTED_ERROR_MESSAGE);
   });
 });

@@ -40,5 +40,11 @@ export class LeaveRequest {
 
   @UpdateDateColumn()
   updatedAt: Date;
-  
+
+  @Column({
+    type: "enum",
+    enum: ["Annual Leave"],
+    default: "Annual Leave",
+  })
+  type: "Annual Leave";
 }

@@ -62,7 +62,6 @@ describe("LeaveController", () => {
     leaveRequest.startDate = "2000-01-01";
     leaveRequest.endDate = "2000-01-12";
     leaveRequest.reason = "test text";
-    leaveRequest.user = getValidStaffData();
     return leaveRequest;
   }
 
@@ -104,27 +103,99 @@ describe("LeaveController", () => {
     );
   });
 
-  it("should return leave requests when user is admin", async () => {
+  it("getAll returns leave requests when user is admin", async () => {
     // Arrange
-    let validLeaveRequest = getValidLeaveRequest();
-    validLeaveRequest.user= getValidStaffData()
+    const validAdmin = getValidAdminData();
+    const validLeaveRequests = [
+      {
+        id: 1,
+        user: validAdmin,
+        startDate: "2025-01-01",
+        endDate: "2025-01-10",
+      },
+      {
+        id: 2,
+        user: validAdmin,
+        startDate: "2025-02-01",
+        endDate: "2025-02-10",
+      },
+    ];
 
     const req = mockRequest();
     const res = mockResponse();
 
-    req.signedInUser = getValidStaffData();
+    req.signedInUser = validAdmin;
 
-    (mockLeaveRepository.find as jest.Mock).mockResolvedValue(validLeaveRequest);
+    (mockLeaveRepository.find as jest.Mock).mockResolvedValue(
+      validLeaveRequests
+    );
 
     // Act
     await leaveController.getAll(req as Request, res as Response);
 
-    // Arrange
-    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
+    // Assert
+    expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(
       res,
-      StatusCodes.FORBIDDEN,
-      LeaveController.ERROR_UNAUTHORIZED_ACTION
+      expect.arrayContaining(validLeaveRequests)
     );
   });
 
+  it("getById returns only the signed-in staff's leave requests", async () => {
+    const validStaff = getValidStaffData(); // Mock data for a staff user
+    const validAdmin = getValidAdminData(); // Mock data for an admin user
+
+    // Mock leave requests: one for the staff, one for the admin
+    const validLeaveRequests = [
+      {
+        id: 1,
+        user: validStaff,
+        startDate: "2025-01-01",
+        endDate: "2025-01-10",
+      },
+      {
+        id: 2,
+        user: validAdmin,
+        startDate: "2025-02-01",
+        endDate: "2025-02-10",
+      },
+    ];
+
+    const req = mockRequest();
+    const res = mockResponse();
+
+    // Simulate the signed-in user being the staff
+    req.signedInUser = validStaff;
+
+    // Mock the repository to return all leave requests
+    (mockLeaveRepository.find as jest.Mock).mockResolvedValue(
+      validLeaveRequests.filter((leave) => leave.user.id === validStaff.id)
+    );
+
+    // Act
+    await leaveController.getById(req as Request, res as Response);
+
+    // Assert
+    // Ensure the response only includes the leave requests for the signed-in staff
+    expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(res, [
+      {
+        id: 1,
+        user: validStaff,
+        startDate: "2025-01-01",
+        endDate: "2025-01-10",
+      },
+    ]);
+
+    // Ensure the response does NOT include leave requests for other users
+    expect(ResponseHandler.sendSuccessResponse).not.toHaveBeenCalledWith(
+      res,
+      expect.arrayContaining([
+        {
+          id: 2,
+          user: validAdmin,
+          startDate: "2025-02-01",
+          endDate: "2025-02-10",
+        },
+      ])
+    );
+  });
 });

@@ -4,11 +4,11 @@ import { User } from "../entity/User";
 import { Repository } from "typeorm";
 import { ResponseHandler } from "../helper/ResponseHandler";
 import { StatusCodes } from "http-status-codes";
-import { validate } from "class-validator";
 import { instanceToPlain } from "class-transformer";
 import { LeaveRequest } from "../entity/LeaveRequest";
+import { IEntityController } from "./IEntityControllers";
 
-export class LeaveController {
+export class LeaveController implements IEntityController {
   public static readonly ERROR_NO_USER_ID_PROVIDED = "No ID provided";
   public static readonly ERROR_INVALID_USER_ID_FORMAT = "Invalid ID format";
   public static readonly ERROR_FAILED_TO_RETRIEVE_LEAVES =
@@ -76,10 +76,7 @@ export class LeaveController {
   };
 
   // Admin and managers can approve/reject leave
-  public updateLeaveStatus = async (
-    req: Request,
-    res: Response
-  ): Promise<void> => {
+  public update = async (req: Request, res: Response): Promise<void> => {
     const id = req.body.id;
     try {
       const leave = await this.leaveRepository.findOne({
@@ -129,19 +126,19 @@ export class LeaveController {
     }
   };
 
+  // Managers can view their staff's leave
+
   // Staff can view their own leave
-  public ownLeave = async (req: Request, res: Response): Promise<void> => {
+  public getById = async (req: Request, res: Response): Promise<void> => {
     try {
-      const leaveRequests = await this.leaveRepository.find({
-        relations: ["user"], // Include all user fields in response
-      });
-
+      // Fetch leave requests only for the signed-in user
       const leaves = await this.leaveRepository.find({
-        where: { user: { id: req.signedInUser.uid } },
+        where: { user: { id: req.signedInUser.uid } }, // Filter by signed-in user's ID
+        relations: ["user"], // Include user details in the response
       });
+      console.log(req.signedInUser.uid)
 
-      console.log(leaves);
-
+      // Return the leave requests for the signed-in user
       ResponseHandler.sendSuccessResponse(res, leaves);
     } catch (error) {
       ResponseHandler.sendErrorResponse(
@@ -170,6 +167,11 @@ export class LeaveController {
 
       if (req.body.reason) {
         leaveRequest.reason = req.body.reason;
+      }
+
+      // Only AL for now byt can be changed
+      if (req.body.type) {
+        leaveRequest.type = req.body.type;
       }
 
       const daysDifference = this.dateDiff(
