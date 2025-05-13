@@ -136,7 +136,6 @@ export class LeaveController implements IEntityController {
         where: { user: { id: req.signedInUser.uid } }, // Filter by signed-in user's ID
         relations: ["user"], // Include user details in the response
       });
-      console.log(req.signedInUser.uid)
 
       // Return the leave requests for the signed-in user
       ResponseHandler.sendSuccessResponse(res, leaves);
@@ -156,9 +155,7 @@ export class LeaveController implements IEntityController {
 
       // Get current datetime
       let date = new Date();
-      leaveRequest.user = await AppDataSource.getRepository(
-        User
-      ).findOneByOrFail({
+      leaveRequest.user = await this.userRepository.findOneByOrFail({
         id: req.signedInUser.uid,
       });
       leaveRequest.createdAt = date;

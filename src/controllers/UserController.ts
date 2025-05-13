@@ -179,10 +179,13 @@ export class UserController implements IEntityController {
         throw new AppError(UserController.ERROR_NO_USER_ID_PROVIDED);
       }
 
-      let user = await this.userRepository.findOne({
-        where: { id },
-        relations: ["manager", "role"],
-      });
+      let user = await this.userRepository
+        .createQueryBuilder("user")
+        .addSelect("user.password") // explicitly select the password
+        .leftJoinAndSelect("user.manager", "manager")
+        .leftJoinAndSelect("user.role", "role")
+        .where("user.id = :id", { id })
+        .getOne();
 
       if (!user) {
         throw new AppError(UserController.ERROR_USER_NOT_FOUND);
