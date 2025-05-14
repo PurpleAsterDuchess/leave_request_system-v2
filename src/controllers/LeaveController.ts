@@ -22,6 +22,7 @@ export class LeaveController implements IEntityController {
     `Error retrieving leave: ${error}`;
   public static readonly ERROR_LEAVE_EXCEEDS_AL =
     "Dates provided are greater than allowed AL";
+  public static readonly ERROR_INVALID_DATE = "Invalid start or end date"
   public static readonly ERROR_VALIDATION_FAILED = "Validation failed";
   public static readonly ERROR_UNAUTHORIZED_ACTION =
     "Invalid authorization for this action";
@@ -34,227 +35,233 @@ export class LeaveController implements IEntityController {
     this.userRepository = AppDataSource.getRepository(User);
   }
 
-  public dateDiff = (start, end) => {
+  public dateDiff = (res, start, end) => {
     end = new Date(end);
     start = new Date(start);
     const daysDifference =
       Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
-
-    return daysDifference;
+    if (daysDifference > 0) {
+      return daysDifference;
+    } else{
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.FORBIDDEN,
+        LeaveController.ERROR_INVALID_DATE
+      );
+    }
   };
 
   // Admin can get all leave requests
   public getAll = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const leaveRequests = await this.leaveRepository.find({
-        relations: ["user"], // Include all user fields in response
+    const currentUserRole = req.signedInUser.role.id;
+    const currentUserId = req.signedInUser.uid;
+
+    // Fetch all leave requests with embedded user details
+    let leaveRequests;
+
+    if (currentUserRole === 1) {
+      // Admin: Fetch all leave requests and embedded users
+      leaveRequests = await this.leaveRepository.find({
+        relations: ["user"],
       });
-
-      if (leaveRequests.length === 0) {
-        ResponseHandler.sendErrorResponse(res, StatusCodes.NO_CONTENT);
-        return;
-      }
-
-      // Only show all leave if signed in user is admin
-      if (req.signedInUser.role.id !== 1) {
-        ResponseHandler.sendErrorResponse(
-          res,
-          StatusCodes.FORBIDDEN,
-          LeaveController.ERROR_UNAUTHORIZED_ACTION
-        );
-        return;
-      }
-
-      ResponseHandler.sendSuccessResponse(res, leaveRequests);
-    } catch (error) {
+    } else if (currentUserRole === 2) {
+      // Manager: Fetch leave requests for users they manage and embedded managers
+      leaveRequests = await this.leaveRepository.find({
+        relations: ["user", "user.manager"],
+        where: { user: { manager: { id: currentUserId } } },
+      });
+    } else {
+      // Unauthorized role
       ResponseHandler.sendErrorResponse(
         res,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        `${LeaveController.ERROR_FAILED_TO_RETRIEVE_LEAVE}: ${error.message}`
+        StatusCodes.FORBIDDEN,
+        LeaveController.ERROR_UNAUTHORIZED_ACTION
       );
+      return;
     }
+
+    // Check if any leave requests exist
+    if (!leaveRequests || leaveRequests.length === 0) {
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.NO_CONTENT,
+        "No leave requests found."
+      );
+      return;
+    }
+
+    // Return the leave requests
+    ResponseHandler.sendSuccessResponse(res, leaveRequests, StatusCodes.OK);
   };
 
   // Admin and managers can approve/reject leave
   public update = async (req: Request, res: Response): Promise<void> => {
     const id = req.body.id;
-    try {
-      const leave = await this.leaveRepository.findOne({
-        where: { leaveId: id },
-        relations: ["user"],
-      });
+    const leave = await this.leaveRepository.findOne({
+      where: { leaveId: id },
+      relations: ["user"],
+    });
 
-      // Find the manager of the user that has requested that leave
-      const userRepository = AppDataSource.getRepository(User);
-      const uid = leave.user.id;
-      const user = await userRepository.findOne({
-        where: { id: uid },
-        relations: ["manager"], // Load the embedded manager user
-      });
+    // Find the manager of the user that has requested that leave
+    const userRepository = AppDataSource.getRepository(User);
+    const uid = leave.user.id;
+    const user = await userRepository.findOne({
+      where: { id: uid },
+      relations: ["manager"], // Load the embedded manager user
+    });
 
-      // Check signed in user is either an admin or the user's line manager
-      if (
-        req.signedInUser.role.id === 1 ||
-        user.manager?.id === req.signedInUser.uid
-      ) {
-        let date = new Date();
+    // Check signed in user is either an admin or the user's line manager
+    if (
+      req.signedInUser.role.id === 1 ||
+      user.manager?.id === req.signedInUser.uid
+    ) {
+      let date = new Date();
 
-        leave.status = req.body.status;
-        leave.updatedAt = date;
+      leave.status = req.body.status;
+      leave.updatedAt = date;
 
-        if (leave.status === "rejected") {
-          const daysDifference = this.dateDiff(leave.endDate, leave.startDate);
+      if (leave.status === "rejected") {
+        const daysDifference = this.dateDiff(res, leave.endDate, leave.startDate);
 
-          const newRemainingAl = leave.user.remainingAl + daysDifference;
-          leave.user.remainingAl = newRemainingAl;
-        }
-
-        ResponseHandler.sendSuccessResponse(res, leave, StatusCodes.ACCEPTED);
-      } else {
-        ResponseHandler.sendErrorResponse(
-          res,
-          StatusCodes.FORBIDDEN,
-          LeaveController.ERROR_UNAUTHORIZED_ACTION
-        );
+        const newRemainingAl = leave.user.remainingAl + daysDifference;
+        leave.user.remainingAl = newRemainingAl;
       }
-    } catch (error) {
+
+      ResponseHandler.sendSuccessResponse(res, leave, StatusCodes.ACCEPTED);
+    } else {
       ResponseHandler.sendErrorResponse(
         res,
-        StatusCodes.BAD_REQUEST,
-        LeaveController.ERROR_RETRIEVING_LEAVE(error.message)
+        StatusCodes.FORBIDDEN,
+        LeaveController.ERROR_UNAUTHORIZED_ACTION
       );
     }
   };
-
-  // Managers can view their staff's leave
 
   // Staff can view their own leave
   public getById = async (req: Request, res: Response): Promise<void> => {
-    try {
-      // Fetch leave requests only for the signed-in user
-      const leaves = await this.leaveRepository.find({
-        where: { user: { id: req.signedInUser.uid } }, // Filter by signed-in user's ID
-        relations: ["user"], // Include user details in the response
-      });
+    // Fetch leave requests only for the signed-in user
+    const leaves = await this.leaveRepository.find({
+      where: { user: { id: req.signedInUser.uid } }, // Filter by signed-in user's ID
+      relations: ["user"], // Include user details in the response
+    });
 
-      // Return the leave requests for the signed-in user
-      ResponseHandler.sendSuccessResponse(res, leaves);
-    } catch (error) {
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.BAD_REQUEST,
-        LeaveController.ERROR_RETRIEVING_LEAVE(error.message)
-      );
-    }
+    // Return the leave requests for the signed-in user
+    ResponseHandler.sendSuccessResponse(res, leaves);
   };
 
-  // Staff can create their own leave
+  // Managers can create leave for their staff
   public create = async (req: Request, res: Response): Promise<void> => {
     try {
-      let leaveRequest = new LeaveRequest();
+      const currentUserId = req.signedInUser.uid; // Get the manager's ID
+      const { uid, startDate, endDate, reason, type } = req.body;
 
-      // Get current datetime
-      let date = new Date();
-      leaveRequest.user = await this.userRepository.findOneByOrFail({
-        id: req.signedInUser.uid,
+      // Validate input
+      if (!uid || !startDate || !endDate) {
+        ResponseHandler.sendErrorResponse(
+          res,
+          StatusCodes.BAD_REQUEST,
+          "User ID, start date, and end date are required."
+        );
+        return;
+      }
+
+      // Fetch the user (employee) for whom the leave is being created
+      const employee = await this.userRepository.findOne({
+        where: { id: uid, manager: { id: currentUserId } }, // Ensure the user is managed by the current manager
       });
-      leaveRequest.createdAt = date;
-      leaveRequest.startDate = req.body.startDate;
-      leaveRequest.endDate = req.body.endDate;
 
-      if (req.body.reason) {
-        leaveRequest.reason = req.body.reason;
+      if (!employee) {
+        ResponseHandler.sendErrorResponse(
+          res,
+          StatusCodes.NOT_FOUND,
+          "Employee not found or you are not authorized to manage this user."
+        );
+        return;
       }
 
-      // Only AL for now byt can be changed
-      if (req.body.type) {
-        leaveRequest.type = req.body.type;
+      // Calculate number of leave days requested
+      const daysDifference = this.dateDiff(res, startDate, endDate);
+
+      // Check if the employee has sufficient remaining leave balance
+      if (employee.remainingAl < daysDifference) {
+        ResponseHandler.sendErrorResponse(
+          res,
+          StatusCodes.BAD_REQUEST,
+          "Insufficient annual leave balance for the employee."
+        );
+        return;
       }
 
-      const daysDifference = this.dateDiff(
+      // Create a new leave request
+      const leaveRequest = new LeaveRequest();
+      leaveRequest.user = employee; // Assign the employee to the leave request
+      leaveRequest.startDate = startDate;
+      leaveRequest.endDate = endDate;
+      leaveRequest.reason = reason || ""; // Optional reason
+      leaveRequest.type = type || "AL"; // Default to "Annual Leave" if type is not provided
+      leaveRequest.createdAt = new Date();
+
+      // Deduct the requested days from the employee's remaining leave balance
+      employee.remainingAl -= daysDifference;
+      await this.userRepository.save(employee);
+
+      // Save the leave request
+      const savedLeaveRequest = await this.leaveRepository.save(leaveRequest);
+
+      // Respond with success
+      ResponseHandler.sendSuccessResponse(
+        res,
+        instanceToPlain(savedLeaveRequest),
+        StatusCodes.CREATED
+      );
+    } catch (error) {
+      // Handle unexpected errors
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `Failed to create leave request: ${error.message}`
+      );
+    }
+  }
+
+  public delete = async (req: Request, res: Response): Promise<void> => {
+    const id = req.params.id;
+    if (!id) {
+      throw new Error("No ID provided");
+    }
+
+    // find a specific leave id and include user
+    const leaveRequest = await this.leaveRepository.findOne({
+      where: { leaveId: id },
+      relations: ["user"],
+    });
+
+    if (leaveRequest.user.id !== req.signedInUser.uid) {
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.FORBIDDEN,
+        LeaveController.ERROR_UNAUTHORIZED_ACTION
+      );
+      return;
+    } else {
+      const daysDifference = this.dateDiff(res, 
         leaveRequest.endDate,
         leaveRequest.startDate
       );
 
-      const newRemainingAl = leaveRequest.user.remainingAl - daysDifference;
-
-      // Check remaining al is not negative
-      if (newRemainingAl < 0) {
-        ResponseHandler.sendErrorResponse(
-          res,
-          StatusCodes.BAD_REQUEST,
-          LeaveController.ERROR_LEAVE_EXCEEDS_AL
-        );
-        return;
-      }
-
-      // Update remaining leave
+      const newRemainingAl = leaveRequest.user.remainingAl + daysDifference;
       leaveRequest.user.remainingAl = newRemainingAl;
-      console.log(this.userRepository);
-      await this.userRepository.save(leaveRequest.user);
 
-      leaveRequest = await this.leaveRepository.save(leaveRequest);
-
-      ResponseHandler.sendSuccessResponse(
-        res,
-        instanceToPlain(leaveRequest),
-        StatusCodes.CREATED
-      );
-    } catch (error) {
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.BAD_REQUEST,
-        LeaveController.ERROR_RETRIEVING_LEAVE(error.message)
-      );
-    }
-  };
-
-  public delete = async (req: Request, res: Response): Promise<void> => {
-    const id = req.params.id;
-    try {
-      if (!id) {
-        throw new Error("No ID provided");
+      const result = await this.leaveRepository.delete(id);
+      if (result.affected === 0) {
+        throw new Error(LeaveController.ERROR_LEAVE_NOT_FOUND_FOR_DELETION);
       }
-
-      // find a specific leave id and include user
-      const leaveRequest = await this.leaveRepository.findOne({
-        where: { leaveId: id },
-        relations: ["user"],
-      });
-
-      if (leaveRequest.user.id !== req.signedInUser.uid) {
-        ResponseHandler.sendErrorResponse(
-          res,
-          StatusCodes.FORBIDDEN,
-          LeaveController.ERROR_UNAUTHORIZED_ACTION
-        );
-        return;
-      } else {
-        const daysDifference = this.dateDiff(
-          leaveRequest.endDate,
-          leaveRequest.startDate
-        );
-
-        const newRemainingAl = leaveRequest.user.remainingAl + daysDifference;
-        leaveRequest.user.remainingAl = newRemainingAl;
-
-        const result = await this.leaveRepository.delete(id);
-        if (result.affected === 0) {
-          throw new Error(LeaveController.ERROR_LEAVE_NOT_FOUND_FOR_DELETION);
-        }
-      }
-
-      ResponseHandler.sendSuccessResponse(
-        res,
-        "Leave request deleted",
-        StatusCodes.OK
-      );
-    } catch (error: any) {
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.NOT_FOUND,
-        error.message
-      );
     }
+
+    ResponseHandler.sendSuccessResponse(
+      res,
+      "Leave request deleted",
+      StatusCodes.OK
+    );
   };
 }

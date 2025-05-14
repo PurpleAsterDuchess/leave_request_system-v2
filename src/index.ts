@@ -10,6 +10,8 @@ import { LoginRouter } from "./routes/LoginRouter";
 import { LoginController } from "./controllers/LoginController";
 import { LeaveRouter } from "./routes/LeaveRouter";
 import { LeaveController } from "./controllers/LeaveController";
+import { StaffLeaveRouter } from "./routes/StaffLeaveRouter";
+import { StaffLeaveController } from "./controllers/StaffLeaveController";
 
 //Initialise the port
 const DEFAULT_PORT = 8900;
@@ -28,6 +30,7 @@ const routers = [
   new RoleRouter(Router(), new RoleController()),
   new UserRouter(Router(), new UserController()),
   new LeaveRouter(Router(), new LeaveController()),
+  new StaffLeaveRouter(Router(), new StaffLeaveController())
 ];
 
 // Instantiate/start the server

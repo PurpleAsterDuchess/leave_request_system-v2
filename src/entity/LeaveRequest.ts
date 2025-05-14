@@ -33,7 +33,7 @@ export class LeaveRequest {
     enum: ["pending", "approved", "rejected"],
     default: "pending",
   })
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected"|"canceled";
 
   @CreateDateColumn()
   createdAt: Date;
