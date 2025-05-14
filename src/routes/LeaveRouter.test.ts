@@ -1,7 +1,7 @@
 import request from "supertest";
 import express, { Router } from "express";
 import { LeaveRouter } from "./LeaveRouter";
-import { LeaveController } from "../controllers/LeaveController";
+import { LeaveController } from "@controllers/LeaveController";
 import { StatusCodes } from "http-status-codes";
 import { start } from "repl";
 import { stat } from "fs";

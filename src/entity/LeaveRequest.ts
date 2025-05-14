@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { User } from "./User";
-import { IsDateString } from "class-validator";
+import { IsDateString, IsIn, IsNotEmpty } from "class-validator";
 
 @Entity({ name: "leaveRequest" })
 export class LeaveRequest {
@@ -15,6 +15,7 @@ export class LeaveRequest {
   leaveId: number;
 
   @ManyToOne(() => User, { nullable: false })
+  @IsNotEmpty({ message: "User is required" })
   user: User;
 
   @Column({ type: "date" })
@@ -33,7 +34,10 @@ export class LeaveRequest {
     enum: ["pending", "approved", "rejected"],
     default: "pending",
   })
-  status: "pending" | "approved" | "rejected"|"canceled";
+  @IsIn(["pending", "approved", "rejected", "canceled"], {
+    message: "Invalid status",
+  })  
+  status: "pending" | "approved" | "rejected" | "canceled";
 
   @CreateDateColumn()
   createdAt: Date;
@@ -46,5 +50,6 @@ export class LeaveRequest {
     enum: ["Annual Leave"],
     default: "Annual Leave",
   })
+  @IsIn(["Annual Leave"], { message: "Invalid leave type" })
   type: "Annual Leave";
 }

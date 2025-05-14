@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { UserController } from "../controllers/UserController";
+import { UserController } from "@controllers/UserController";
 import { IRouter } from "./IRouter";
-import { IGetByEmail } from "../controllers/IGetByEmail";
+import { IGetByEmail } from "@controllers/IGetByEmail";
 
 export class UserRouter implements IRouter {
   public routeName = "users";

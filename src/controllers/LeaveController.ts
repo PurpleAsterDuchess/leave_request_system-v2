@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
-import { User } from "../entity/User";
+import { User } from "@entity/User";
 import { Repository } from "typeorm";
-import { ResponseHandler } from "../helper/ResponseHandler";
+import { ResponseHandler } from "@helper/ResponseHandler";
 import { StatusCodes } from "http-status-codes";
 import { instanceToPlain } from "class-transformer";
-import { LeaveRequest } from "../entity/LeaveRequest";
+import { LeaveRequest } from "@entity/LeaveRequest";
 import { IEntityController } from "./IEntityControllers";
 
 export class LeaveController implements IEntityController {
@@ -22,7 +22,7 @@ export class LeaveController implements IEntityController {
     `Error retrieving leave: ${error}`;
   public static readonly ERROR_LEAVE_EXCEEDS_AL =
     "Dates provided are greater than allowed AL";
-  public static readonly ERROR_INVALID_DATE = "Invalid start or end date"
+  public static readonly ERROR_INVALID_DATE = "Invalid start or end date";
   public static readonly ERROR_VALIDATION_FAILED = "Validation failed";
   public static readonly ERROR_UNAUTHORIZED_ACTION =
     "Invalid authorization for this action";
@@ -42,7 +42,7 @@ export class LeaveController implements IEntityController {
       Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
     if (daysDifference > 0) {
       return daysDifference;
-    } else{
+    } else {
       ResponseHandler.sendErrorResponse(
         res,
         StatusCodes.FORBIDDEN,
@@ -121,7 +121,11 @@ export class LeaveController implements IEntityController {
       leave.updatedAt = date;
 
       if (leave.status === "rejected") {
-        const daysDifference = this.dateDiff(res, leave.endDate, leave.startDate);
+        const daysDifference = this.dateDiff(
+          res,
+          leave.endDate,
+          leave.startDate
+        );
 
         const newRemainingAl = leave.user.remainingAl + daysDifference;
         leave.user.remainingAl = newRemainingAl;
@@ -222,7 +226,7 @@ export class LeaveController implements IEntityController {
         `Failed to create leave request: ${error.message}`
       );
     }
-  }
+  };
 
   public delete = async (req: Request, res: Response): Promise<void> => {
     const id = req.params.id;
@@ -244,10 +248,10 @@ export class LeaveController implements IEntityController {
       );
       return;
     } else {
-      const daysDifference = this.dateDiff(res, 
+      const daysDifference = this.dateDiff(
+        res,
         leaveRequest.startDate,
-        leaveRequest.endDate,
-        
+        leaveRequest.endDate
       );
 
       const newRemainingAl = leaveRequest.user.remainingAl + daysDifference;

@@ -1,9 +1,9 @@
-import { Role } from "../entity/Role";
+import { Role } from "@entity/Role";
 
 export class UserDTOToken {
   constructor(
     readonly email: string,
     readonly role: Role,
-    readonly uid: number,
+    readonly uid: number
   ) {}
 }

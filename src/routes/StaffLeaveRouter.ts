@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { StaffLeaveController } from "../controllers/StaffLeaveController";
+import { StaffLeaveController } from "@controllers/StaffLeaveController";
 import { IRouter } from "./IRouter";
 
 export class StaffLeaveRouter implements IRouter {

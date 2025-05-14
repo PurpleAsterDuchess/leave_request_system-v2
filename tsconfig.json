@@ -8,7 +8,15 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "sourceMap": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+
+    // tidy imports
+    "baseUrl": "./",
+    "paths": {
+      "@helper/*": ["src/helper/*"],
+      "@controllers/*": ["src/controllers/*"],
+      "@entity/*": ["src/entity/*"],
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

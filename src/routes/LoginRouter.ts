@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { ILoginController } from "../controllers/LoginController";
+import { ILoginController } from "@controllers/LoginController";
 import { IRouter } from "./IRouter";
 
 export class LoginRouter implements IRouter {
@@ -13,7 +13,7 @@ export class LoginRouter implements IRouter {
   ) {
     this.addRoutes();
   }
-  
+
   public getRouter(): Router {
     return this.router;
   }

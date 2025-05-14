@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
-import { User } from "../entity/User";
+import { User } from "@entity/User";
 import { Repository } from "typeorm";
-import { ResponseHandler } from "../helper/ResponseHandler";
+import { ResponseHandler } from "@helper/ResponseHandler";
 import { StatusCodes } from "http-status-codes";
 import { instanceToPlain } from "class-transformer";
-import { LeaveRequest } from "../entity/LeaveRequest";
+import { LeaveRequest } from "@entity/LeaveRequest";
 import { IEntityController } from "./IEntityControllers";
 
 export class StaffLeaveController implements IEntityController {
@@ -38,7 +38,6 @@ export class StaffLeaveController implements IEntityController {
   public dateDiff = (res, start, end) => {
     end = new Date(end);
     start = new Date(start);
-    console.log(end, start)
     const daysDifference =
       Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
     if (daysDifference > 0) {
@@ -200,7 +199,7 @@ export class StaffLeaveController implements IEntityController {
 
     // Update remaining leave
     leaveRequest.user.remainingAl = newRemainingAl;
-    
+
     await this.userRepository.save(leaveRequest.user);
 
     leaveRequest = await this.staffLeaveRepository.save(leaveRequest);

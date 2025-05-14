@@ -1,7 +1,7 @@
 import request from "supertest";
 import express, { Router } from "express";
 import { UserRouter } from "./UserRouter";
-import { UserController } from "../controllers/UserController";
+import { UserController } from "@controllers/UserController";
 import { StatusCodes } from "http-status-codes";
 
 const mockUserController = {

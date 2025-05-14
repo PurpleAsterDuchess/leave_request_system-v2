@@ -1,7 +1,7 @@
 import request from "supertest";
 import express, { Router } from "express";
 import { StaffLeaveRouter } from "./StaffLeaveRouter";
-import { StaffLeaveController } from "../controllers/StaffLeaveController";
+import { StaffLeaveController } from "@controllers/StaffLeaveController";
 import { StatusCodes } from "http-status-codes";
 
 const mockStaffLeaveController = {

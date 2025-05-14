@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
-import { Role } from "../entity/Role";
+import { Role } from "@entity/Role";
 import { Repository } from "typeorm";
 import { StatusCodes } from "http-status-codes";
-import { ResponseHandler } from "../helper/ResponseHandler";
+import { ResponseHandler } from "@helper/ResponseHandler";
 import { validate } from "class-validator";
-import { AppError } from "../helper/AppError";
+import { AppError } from "@helper/AppError";
 import { IEntityController } from "./IEntityControllers";
 
 export class RoleController implements IEntityController {
