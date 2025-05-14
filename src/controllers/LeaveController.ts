@@ -245,8 +245,9 @@ export class LeaveController implements IEntityController {
       return;
     } else {
       const daysDifference = this.dateDiff(res, 
+        leaveRequest.startDate,
         leaveRequest.endDate,
-        leaveRequest.startDate
+        
       );
 
       const newRemainingAl = leaveRequest.user.remainingAl + daysDifference;

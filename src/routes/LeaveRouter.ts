@@ -21,7 +21,7 @@ export class LeaveRouter implements IRouter {
   private addRoutes() {
     // Get
     this.router.get("/", this.leaveController.getAll);
-    this.router.get("/own", this.leaveController.getById);
+    this.router.get("/:id", this.leaveController.getById);
 
     // Post
     this.router.post("/", this.leaveController.create);

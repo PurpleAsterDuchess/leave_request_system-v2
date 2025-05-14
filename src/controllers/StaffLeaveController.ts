@@ -38,6 +38,7 @@ export class StaffLeaveController implements IEntityController {
   public dateDiff = (res, start, end) => {
     end = new Date(end);
     start = new Date(start);
+    console.log(end, start)
     const daysDifference =
       Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
     if (daysDifference > 0) {
@@ -45,7 +46,7 @@ export class StaffLeaveController implements IEntityController {
     } else {
       ResponseHandler.sendErrorResponse(
         res,
-        StatusCodes.FORBIDDEN,
+        StatusCodes.BAD_REQUEST,
         StaffLeaveController.ERROR_INVALID_DATE
       );
     }
@@ -53,7 +54,6 @@ export class StaffLeaveController implements IEntityController {
 
   // Staff can get all of their own leave requests
   public getAll = async (req: Request, res: Response): Promise<void> => {
-    console.log("here");
     // Fetch leave requests only for the signed-in user
     const leaves = await this.staffLeaveRepository.find({
       where: { user: { id: req.signedInUser.uid } }, // Filter by signed-in user's ID
@@ -182,8 +182,8 @@ export class StaffLeaveController implements IEntityController {
 
     const daysDifference = this.dateDiff(
       res,
-      leaveRequest.endDate,
-      leaveRequest.startDate
+      leaveRequest.startDate,
+      leaveRequest.endDate
     );
 
     const newRemainingAl = leaveRequest.user.remainingAl - daysDifference;
@@ -200,7 +200,7 @@ export class StaffLeaveController implements IEntityController {
 
     // Update remaining leave
     leaveRequest.user.remainingAl = newRemainingAl;
-    console.log(this.userRepository);
+    
     await this.userRepository.save(leaveRequest.user);
 
     leaveRequest = await this.staffLeaveRepository.save(leaveRequest);
@@ -235,8 +235,8 @@ export class StaffLeaveController implements IEntityController {
     } else {
       const daysDifference = this.dateDiff(
         res,
-        leaveRequest.endDate,
-        leaveRequest.startDate
+        leaveRequest.startDate,
+        leaveRequest.endDate
       );
 
       const newRemainingAl = leaveRequest.user.remainingAl + daysDifference;

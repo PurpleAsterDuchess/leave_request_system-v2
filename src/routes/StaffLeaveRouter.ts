@@ -3,7 +3,7 @@ import { StaffLeaveController } from "../controllers/StaffLeaveController";
 import { IRouter } from "./IRouter";
 
 export class StaffLeaveRouter implements IRouter {
-  public routeName = "leave";
+  public routeName = "staff";
   public basePath = "/api/leave";
   public authenticate = true;
 
@@ -20,16 +20,16 @@ export class StaffLeaveRouter implements IRouter {
   }
   private addRoutes() {
     // Get
-    this.router.get("/staff/", this.staffLeaveController.getAll);
-    this.router.get("/staff/:id", this.staffLeaveController.getById);
+    this.router.get("/", this.staffLeaveController.getAll);
+    this.router.get("/:id", this.staffLeaveController.getById);
 
     // Post
-    this.router.post("/staff/", this.staffLeaveController.create);
+    this.router.post("/", this.staffLeaveController.create);
 
     // Delete
-    this.router.delete("/staff/:id", this.staffLeaveController.delete);
+    this.router.delete("/:id", this.staffLeaveController.delete);
 
     // Patch
-    this.router.patch("/staff/", this.staffLeaveController.update);
+    this.router.patch("/", this.staffLeaveController.update);
   }
 }
