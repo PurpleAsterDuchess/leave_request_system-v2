@@ -1,13 +1,13 @@
 import { AppDataSource } from "../data-source";
-import { User } from "@entity/User";
+import { User } from "../entity/User";
 import { Repository } from "typeorm";
-import { ResponseHandler } from "@helper/ResponseHandler";
+import { ResponseHandler } from "../helper/ResponseHandler";
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { PasswordHandler } from "@helper/PasswordHandler";
+import { PasswordHandler } from "../helper/PasswordHandler";
 import { UserDTOToken } from "./UserDTOToken";
 import jwt from "jsonwebtoken";
-import { AppError } from "@helper/AppError";
+import { AppError } from "../helper/AppError";
 
 export interface ILoginController {
   login(req: Request, res: Response): Promise<void>;
