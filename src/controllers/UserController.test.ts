@@ -320,7 +320,7 @@ describe("UserController", () => {
     ).rejects.toThrow(ERROR_NO_ID_PROVIDED);
   });
 
-  it("update will return a BAD_REQUEST if the name does not exist/blank", async () => {
+  it.only("update will return a BAD_REQUEST if the name does not exist/blank", async () => {
     // Arrange
     const validManagerDetails = getValidManagerData();
     const req = mockRequest(

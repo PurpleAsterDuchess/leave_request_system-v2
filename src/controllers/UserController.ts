@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
-import { User } from "@entity/User";
+import { User } from "../entity/User";
 import { Repository } from "typeorm";
-import { ResponseHandler } from "@helper/ResponseHandler";
+import { ResponseHandler } from "../helper/ResponseHandler";
 import { StatusCodes } from "http-status-codes";
 import { validate } from "class-validator";
 import { instanceToPlain } from "class-transformer";
-import { Role } from "@entity/Role";
-import { AppError } from "@helper/AppError";
+import { Role } from "../entity/Role";
+import { AppError } from "../helper/AppError";
 import { IEntityController } from "./IEntityControllers";
 
 export class UserController implements IEntityController {

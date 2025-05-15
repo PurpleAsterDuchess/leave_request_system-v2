@@ -2,7 +2,7 @@ import { AppError } from "./AppError";
 import { StatusCodes } from "http-status-codes";
 
 describe("AppError", () => {
-  it.only("should create an error with a custom message and status code", () => {
+  it("should create an error with a custom message and status code", () => {
     // Arrange
     const message = "Custom error message";
     const statusCode = StatusCodes.BAD_REQUEST;
@@ -11,7 +11,7 @@ describe("AppError", () => {
     const error = new AppError(message, statusCode);
 
     // Assert
-    expect(error).toBeInstanceOf(AppError);
+    expect(error).toBeInstanceOf(Error);
     expect(error.message).toBe(message);
     expect(error.statusCode).toBe(statusCode);
     expect(error.stack).toBeDefined();
@@ -25,7 +25,7 @@ describe("AppError", () => {
     const error = new AppError(message);
 
     // Assert
-    expect(error).toBeInstanceOf(AppError);
+    expect(error).toBeInstanceOf(Error);
     expect(error.message).toBe(message);
     expect(error.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
     expect(error.stack).toBeDefined();

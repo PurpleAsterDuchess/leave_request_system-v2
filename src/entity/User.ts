@@ -16,7 +16,7 @@ import {
 } from "class-validator";
 import { Role } from "./Role";
 import { Exclude } from "class-transformer";
-import { PasswordHandler } from "@helper/PasswordHandler";
+import { PasswordHandler } from "../helper/PasswordHandler";
 
 @Entity({ name: "user" })
 export class User {
