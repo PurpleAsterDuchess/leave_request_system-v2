@@ -56,6 +56,18 @@ describe("UserController", () => {
     return user;
   }
 
+  function getValidAdminData(): User {
+    let role = new Role();
+    role.id = 1;
+    role.name = "admin";
+    let user = new User();
+    user.id = 1;
+    user.password = "a".repeat(10);
+    user.email = "admin@email.com";
+    user.role = role;
+    return user;
+  }
+
   const mockRequest = (params = {}, body = {}): Partial<Request> => ({
     params,
     body,
@@ -226,23 +238,26 @@ describe("UserController", () => {
 
   it("create will return a valid user and return CREATED status when supplied with valid details", async () => {
     // Arrange
-    const validManagerDetails = getValidManagerData();
+    const validAdminDetails = getValidAdminData();
     const req = mockRequest(
       {},
       {
-        password: validManagerDetails.password,
-        email: validManagerDetails.email,
-        roleId: validManagerDetails.role.id,
+        password: validAdminDetails.password,
+        email: validAdminDetails.email,
+        roleId: validAdminDetails.role.id,
       }
     );
+
+    req.signedInUser = validAdminDetails;
+
     const res = mockResponse();
-    mockUserRepository.save.mockResolvedValue(validManagerDetails);
+    mockUserRepository.save.mockResolvedValue(validAdminDetails);
     jest.spyOn(classTransformer, "instanceToPlain").mockReturnValue({
-      id: validManagerDetails.id,
-      email: validManagerDetails.email,
+      id: validAdminDetails.id,
+      email: validAdminDetails.email,
       role: {
-        id: validManagerDetails.role.id,
-        name: validManagerDetails.role.name,
+        id: validAdminDetails.role.id,
+        name: validAdminDetails.role.name,
       },
     } as any);
     jest.spyOn(classValidator, "validate").mockResolvedValue([]);
@@ -253,27 +268,62 @@ describe("UserController", () => {
     // Assert
     expect(mockUserRepository.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        password: validManagerDetails.password,
-        email: validManagerDetails.email,
-        role: validManagerDetails.role.id,
+        password: validAdminDetails.password,
+        email: validAdminDetails.email,
+        role: validAdminDetails.role.id,
       })
     );
     expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(
       res,
       //instanceToPlain should remove password (even if we didn't use a spy)
       {
-        id: validManagerDetails.id,
-        email: validManagerDetails.email,
-        role: validManagerDetails.role,
+        id: validAdminDetails.id,
+        email: validAdminDetails.email,
+        role: validAdminDetails.role,
       },
       StatusCodes.CREATED
     );
+  });
+
+  it("create will return an UNAUTHORIZED when signedInUser is not admin", async () => {
+    // Arrange
+    const validManagerDetails = getValidManagerData(); // Simulate a non-admin user
+    const req = mockRequest(
+      {},
+      {
+        password: validManagerDetails.password,
+        email: validManagerDetails.email,
+        roleId: validManagerDetails.role.id,
+      }
+    );
+
+    req.signedInUser = validManagerDetails; // Signed-in user is a manager, not an admin
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as unknown as Response;
+
+    jest.spyOn(classValidator, "validate").mockResolvedValue([]); // No validation errors
+
+    // Act
+    await userController.create(req as Request, res as Response);
+
+    // Assert
+    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
+      res,
+      StatusCodes.UNAUTHORIZED,
+      "Unauthorized action"
+    );
+    expect(mockUserRepository.save).not.toHaveBeenCalled();
   });
 
   it("delete will return NOT_FOUND if no id is provided", async () => {
     // Arrange
     const req = mockRequest(); //Empty request = no param for id
     const res = mockResponse();
+
+    req.signedInUser = getValidAdminData();
 
     // Act,  Assert
     await expect(
@@ -285,6 +335,8 @@ describe("UserController", () => {
     // Arrange
     const req = mockRequest({ id: INVALID_USER_ID_NUMBER });
     const res = mockResponse();
+    req.signedInUser = getValidAdminData();
+
     //Simulate that no role was deleted
     const deleteResult: DeleteResult = { affected: 0 } as DeleteResult;
     mockUserRepository.delete.mockResolvedValue(deleteResult);
@@ -300,6 +352,8 @@ describe("UserController", () => {
     const validManagerDetails = getValidManagerData();
     const req = mockRequest({ id: validManagerDetails.id }); //id that exists
     const res = mockResponse();
+    req.signedInUser = getValidAdminData();
+
     //Simulate a deletion
     const deleteResult: DeleteResult = { affected: 1 } as DeleteResult;
     mockUserRepository.delete.mockResolvedValue(deleteResult);
@@ -318,10 +372,35 @@ describe("UserController", () => {
     );
   });
 
+  it("delete will return UNAUTHORIZED if the role is not admin", async () => {
+    // Arrange
+    const validManagerDetails = getValidManagerData(); // Simulate a non-admin user
+    const req = mockRequest({ id: validManagerDetails.id }); // ID that exists
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as unknown as Response;
+
+    req.signedInUser = validManagerDetails; // Signed-in user is a manager, not an admin
+
+    // Act
+    await userController.delete(req as Request, res as Response);
+
+    // Assert
+    expect(mockUserRepository.delete).not.toHaveBeenCalled();
+    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
+      res,
+      StatusCodes.UNAUTHORIZED,
+      "Unauthorized action"
+    );
+  });
+
   it("update returns a BAD_REQUEST if no id is provided", async () => {
     // Arrange
     const req = mockRequest({}, {}); //Invalid/no id
     const res = mockResponse();
+
+    req.signedInUser = getValidAdminData();
 
     // Act + Assert
     await expect(
@@ -337,6 +416,7 @@ describe("UserController", () => {
       { id: validManagerDetails.id, name: BLANK_USER_NAME }
     );
     const res = mockResponse();
+    req.signedInUser = getValidAdminData();
 
     mockUserRepository.createQueryBuilder.mockReturnValue({
       ...mockQueryBuilder,
@@ -364,5 +444,139 @@ describe("UserController", () => {
     await expect(
       userController.update(req as Request, res as Response)
     ).rejects.toThrow(EXPECTED_ERROR_MESSAGE);
+  });
+
+  it("update will return a SUCCESS if the user is updated", async () => {
+    // Arrange
+    const validManagerDetails = getValidManagerData();
+    const updatedUser = {
+      id: validManagerDetails.id,
+      firstname: "Updated Firstname",
+      surname: "Updated Surname",
+      email: "updated@example.com",
+      role: validManagerDetails.role,
+      manager: validManagerDetails.manager,
+      initialAlTotal: 20,
+      remainingAl: 15,
+      password: "hashedPassword",
+      salt: "randomSalt",
+      hashPassword: jest.fn(),
+      setDefaultAlTotal: jest.fn(),
+    };
+    const req = mockRequest({}, validManagerDetails);
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as unknown as Response;
+
+    req.signedInUser = getValidAdminData();
+
+    // Ensure validate is mocked to return an empty array
+    jest.spyOn(classValidator, "validate").mockResolvedValue([]);
+
+    // Ensure the user object passed to validate is complete
+    mockUserRepository.createQueryBuilder.mockReturnValue({
+      ...mockQueryBuilder,
+      getOne: jest.fn(() => ({
+        id: validManagerDetails.id,
+        firstname: "Updated Firstname",
+        surname: "Updated Surname",
+        email: "updated@example.com",
+        role: validManagerDetails.role,
+        manager: validManagerDetails.manager,
+        initialAlTotal: 20,
+        remainingAl: 15,
+        password: "hashedPassword",
+        salt: "randomSalt",
+        hashPassword: jest.fn(),
+        setDefaultAlTotal: jest.fn(),
+      })),
+    });
+
+    mockUserRepository.save.mockResolvedValue(updatedUser);
+
+    // Act
+    await userController.update(req as Request, res as Response);
+
+    // Assert
+    expect(mockUserRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: validManagerDetails.id,
+        firstname: "Updated Firstname",
+        surname: "Updated Surname",
+      })
+    );
+    expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(
+      res,
+      updatedUser,
+      StatusCodes.OK
+    );
+  });
+
+  it("update will return an UNAUTHORIZED when signedInUser is not admin", async () => {
+    // Arrange
+    const validManagerDetails = getValidManagerData();
+    const updatedUser = {
+      id: validManagerDetails.id,
+      firstname: "Updated Firstname",
+      surname: "Updated Surname",
+      email: "updated@example.com",
+      role: validManagerDetails.role,
+      manager: validManagerDetails.manager,
+      initialAlTotal: 20,
+      remainingAl: 15,
+      password: "hashedPassword",
+      salt: "randomSalt",
+      hashPassword: jest.fn(),
+      setDefaultAlTotal: jest.fn(),
+    };
+    const req = mockRequest({}, validManagerDetails);
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as unknown as Response;
+
+    req.signedInUser = getValidStaffData();
+
+    // Ensure validate is mocked to return an empty array
+    jest.spyOn(classValidator, "validate").mockResolvedValue([]);
+
+    // Ensure the user object passed to validate is complete
+    mockUserRepository.createQueryBuilder.mockReturnValue({
+      ...mockQueryBuilder,
+      getOne: jest.fn(() => ({
+        id: validManagerDetails.id,
+        firstname: "Updated Firstname",
+        surname: "Updated Surname",
+        email: "updated@example.com",
+        role: validManagerDetails.role,
+        manager: validManagerDetails.manager,
+        initialAlTotal: 20,
+        remainingAl: 15,
+        password: "hashedPassword",
+        salt: "randomSalt",
+        hashPassword: jest.fn(),
+        setDefaultAlTotal: jest.fn(),
+      })),
+    });
+
+    mockUserRepository.save.mockResolvedValue(updatedUser);
+
+    // Act
+    await userController.update(req as Request, res as Response);
+
+    // Assert
+    expect(mockUserRepository.save).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: validManagerDetails.id,
+        firstname: "Updated Firstname",
+        surname: "Updated Surname",
+      })
+    );
+    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
+      res,
+      StatusCodes.UNAUTHORIZED,
+      "Unauthorized action"
+    );
   });
 });

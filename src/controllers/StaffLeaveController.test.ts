@@ -6,8 +6,6 @@ import { DeleteResult, getRepository, Repository } from "typeorm";
 import { StatusCodes } from "http-status-codes";
 import { ResponseHandler } from "../helper/ResponseHandler";
 import { Request, Response } from "express";
-import * as classValidator from "class-validator";
-import * as classTransformer from "class-transformer";
 import { mock } from "jest-mock-extended";
 import { AppDataSource } from "../data-source";
 
@@ -65,6 +63,7 @@ describe("StaffLeaveController", () => {
 
   function getValidLeaveRequest(): any {
     return {
+      leaveId: 1,
       startDate: "2000-01-01",
       endDate: "2000-01-12",
       reason: "test text",
@@ -165,6 +164,60 @@ describe("StaffLeaveController", () => {
           user: validAdmin,
         }),
       ])
+    );
+  });
+
+  it("getById returns an error if an invalid id is supplied", async () => {
+    // Arrange
+    const req = mockRequest({ id: "abc" });
+    const res = mockResponse();
+
+    // Act
+    await leaveController.getById(req as Request, res as Response);
+
+    // Assert
+    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
+      res,
+      StatusCodes.BAD_REQUEST,
+      "Invalid ID format"
+    );
+  });
+
+  it("getById returns NOT_FOUND if the leave id does not exist", async () => {
+    // Arrange
+    const req = mockRequest({ id: "abc" });
+    const res = mockResponse();
+
+    // Act
+    await leaveController.getById(req as Request, res as Response);
+
+    // Assert
+    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
+      res,
+      StatusCodes.BAD_REQUEST,
+      "Invalid ID format"
+    );
+  });
+
+  it("getById returns a leave request if a valid id is supplied", async () => {
+    // Arrange
+    const validAdminDetails = getValidAdminData();
+    const validLeaveRequest = getValidLeaveRequest();
+    validLeaveRequest.user = validAdminDetails;
+    const req = mockRequest({ id: validLeaveRequest.leaveId });
+    const res = mockResponse();
+    mockLeaveRepository.findOne.mockResolvedValue(validLeaveRequest);
+
+    // Act
+    await leaveController.getById(req as Request, res as Response);
+
+    // Assert
+    expect(mockLeaveRepository.findOne).toHaveBeenCalledWith({
+      where: { leaveId: validLeaveRequest.leaveId },
+    });
+    expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(
+      res,
+      validLeaveRequest
     );
   });
 });

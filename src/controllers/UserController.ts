@@ -16,21 +16,7 @@ export class UserController implements IEntityController {
   public static readonly ERROR_USER_NOT_FOUND = "User not found";
   public static readonly ERROR_USER_NOT_FOUND_WITH_ID = (id: number) =>
     `User not found with ID: ${id}`;
-  public static readonly ERROR_PASSWORD_IS_BLANK = "Password is blank";
-  public static readonly ERROR_FAILED_TO_RETRIEVE_USERS =
-    "Failed to retrieve users";
-  public static readonly ERROR_FAILED_TO_RETRIEVE_USER =
-    "Failed to retrieve user";
-  public static readonly ERROR_USER_NOT_FOUND_FOR_DELETION =
-    "User with the provided ID not found";
   public static readonly ERROR_EMAIL_REQUIRED = "Email is required";
-  public static readonly ERROR_EMAIL_NOT_FOUND = (email: string) =>
-    `${email} not found`;
-  public static readonly ERROR_RETRIEVING_USER = (error: string) =>
-    `Error retrieving user: ${error}`;
-  public static readonly ERROR_UNABLE_TO_FIND_USER_EMAIL = (email: string) =>
-    `Unable to find user with the email: ${email}`;
-  public static readonly ERROR_VALIDATION_FAILED = "Validation failed";
 
   private userRepository: Repository<User>;
   private roleRepository: Repository<Role>;
@@ -149,7 +135,15 @@ export class UserController implements IEntityController {
       );
     }
 
-    user = await this.userRepository.save(user);
+    if (req.signedInUser.role.id === 1) {
+      user = await this.userRepository.save(user);
+    } else {
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.UNAUTHORIZED,
+        "Unauthorized action"
+      );
+    }
 
     ResponseHandler.sendSuccessResponse(
       res,
@@ -163,11 +157,19 @@ export class UserController implements IEntityController {
     if (!id) {
       throw new AppError("No ID provided");
     }
-    const result = await this.userRepository.delete(id);
-    if (result.affected === 0) {
-      throw new AppError("User with the provided ID not found");
+    
+    if (req.signedInUser.role.id === 1 ) {
+      const result = await this.userRepository.delete(id);
+      if (result.affected === 0) {
+        throw new AppError("User with the provided ID not found");
+      }
+    } else {
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.UNAUTHORIZED,
+        "Unauthorized action"
+      );
     }
-
     ResponseHandler.sendSuccessResponse(res, "User deleted", StatusCodes.OK);
   };
 
@@ -230,7 +232,15 @@ export class UserController implements IEntityController {
       );
     }
 
-    user = await this.userRepository.save(user);
+    if (req.signedInUser.role.id === 1) {
+      user = await this.userRepository.save(user);
+    } else {
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.UNAUTHORIZED,
+        "Unauthorized action"
+      );
+    }
 
     ResponseHandler.sendSuccessResponse(res, user, StatusCodes.OK);
   };

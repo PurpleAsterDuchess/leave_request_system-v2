@@ -10,20 +10,9 @@ import { IEntityController } from "./IEntityControllers";
 
 export class LeaveController implements IEntityController {
   public static readonly ERROR_NO_USER_ID_PROVIDED = "No ID provided";
-  public static readonly ERROR_INVALID_USER_ID_FORMAT = "Invalid ID format";
-  public static readonly ERROR_FAILED_TO_RETRIEVE_LEAVES =
-    "Failed to retrieve leaves";
-  public static readonly ERROR_FAILED_TO_RETRIEVE_LEAVE =
-    "Failed to retrieve leave";
   public static readonly ERROR_LEAVE_NOT_FOUND_FOR_DELETION =
     "Leave with the provided ID not found";
-  public static readonly ERROR_USER_REQUIRED = "User is required";
-  public static readonly ERROR_RETRIEVING_LEAVE = (error: string) =>
-    `Error retrieving leave: ${error}`;
-  public static readonly ERROR_LEAVE_EXCEEDS_AL =
-    "Dates provided are greater than allowed AL";
   public static readonly ERROR_INVALID_DATE = "Invalid start or end date";
-  public static readonly ERROR_VALIDATION_FAILED = "Validation failed";
   public static readonly ERROR_UNAUTHORIZED_ACTION =
     "Invalid authorization for this action";
 
