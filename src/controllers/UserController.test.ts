@@ -62,11 +62,20 @@ describe("UserController", () => {
   });
   const mockResponse = (): Partial<Response> => ({});
 
+  const mockQueryBuilder = {
+    addSelect: jest.fn().mockReturnThis(),
+    getOne: jest.fn(),
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+  } as any;
+
   let userController: UserController;
   let mockUserRepository: jest.Mocked<Repository<User>>;
 
   beforeEach(() => {
     mockUserRepository = mock<Repository<User>>();
+    mockUserRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+
     // Inject the mocked repository into UserController
     userController = new UserController();
     userController["userRepository"] = mockUserRepository as Repository<User>;
@@ -320,7 +329,7 @@ describe("UserController", () => {
     ).rejects.toThrow(ERROR_NO_ID_PROVIDED);
   });
 
-  it.only("update will return a BAD_REQUEST if the name does not exist/blank", async () => {
+  it("update will return a BAD_REQUEST if the name does not exist/blank", async () => {
     // Arrange
     const validManagerDetails = getValidManagerData();
     const req = mockRequest(
@@ -329,6 +338,13 @@ describe("UserController", () => {
     );
     const res = mockResponse();
 
+    mockUserRepository.createQueryBuilder.mockReturnValue({
+      ...mockQueryBuilder,
+      getOne: jest.fn(() => ({
+        id: validManagerDetails.id,
+        name: BLANK_USER_NAME,
+      })),
+    });
     mockUserRepository.findOne.mockResolvedValue(validManagerDetails);
 
     const EXPECTED_ERROR_MESSAGE = `${VALIDATOR_CONSTRAINT_INVALID_ID}, ${VALIDATOR_CONSTRAINT_EMPTY_OR_WHITESPACE}, ${VALIDATOR_CONSTRAINT_MAX_LENGTH_EXCEEDED}`;

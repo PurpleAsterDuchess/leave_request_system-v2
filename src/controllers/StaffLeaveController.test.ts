@@ -1,14 +1,15 @@
-import { StaffLeaveController } from "@controllers/StaffLeaveController";
-import { User } from "@entity/User";
-import { Role } from "@entity/Role";
-import { LeaveRequest } from "@entity/LeaveRequest";
-import { DeleteResult, Repository } from "typeorm";
+import { StaffLeaveController } from "../controllers/StaffLeaveController";
+import { User } from "../entity/User";
+import { Role } from "../entity/Role";
+import { LeaveRequest } from "../entity/LeaveRequest";
+import { DeleteResult, getRepository, Repository } from "typeorm";
 import { StatusCodes } from "http-status-codes";
-import { ResponseHandler } from "@helper/ResponseHandler";
+import { ResponseHandler } from "../helper/ResponseHandler";
 import { Request, Response } from "express";
 import * as classValidator from "class-validator";
 import * as classTransformer from "class-transformer";
 import { mock } from "jest-mock-extended";
+import { AppDataSource } from "src/data-source";
 
 const VALIDATOR_CONSTRAINT_PASSWORD_AT_LEAST_10_CHARS =
   "Password must be at least 10 characters long";
@@ -22,7 +23,7 @@ const VALIDATOR_CONSTRAINT_EMPTY_OR_WHITESPACE =
 const VALIDATOR_CONSTRAINT_MAX_LENGTH_EXCEEDED =
   "Name must be 30 characters or less";
 
-jest.mock("@helper/ResponseHandler");
+jest.mock("../helper/ResponseHandler");
 jest.mock("class-validator", () => ({
   ...jest.requireActual("class-validator"),
   validate: jest.fn(),
@@ -90,7 +91,7 @@ describe("StaffLeaveController", () => {
     jest.clearAllMocks();
   });
 
-  it("getAll returns only the signed-in staff's leave requests", async () => {
+  it.only("getAll returns only the signed-in staff's leave requests", async () => {
     const validStaff = getValidStaffData(); // Mock data for a staff user
     const validAdmin = getValidAdminData(); // Mock data for an admin user
 

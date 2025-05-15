@@ -54,6 +54,7 @@ export class StaffLeaveController implements IEntityController {
   // Staff can get all of their own leave requests
   public getAll = async (req: Request, res: Response): Promise<void> => {
     // Fetch leave requests only for the signed-in user
+    console.log("here: ", this.staffLeaveRepository)
     const leaves = await this.staffLeaveRepository.find({
       where: { user: { id: req.signedInUser.uid } }, // Filter by signed-in user's ID
       relations: ["user"], // Include user details in the response

@@ -90,6 +90,11 @@ describe("LeaveController", () => {
     // Arrange
     const req = mockRequest();
     const res = mockResponse();
+
+    const validAdmin = getValidAdminData()
+    req.signedInUser = validAdmin;
+
+
     // Simulate no leave requests in the database
     mockLeaveRepository.find.mockResolvedValue([]);
 
@@ -99,7 +104,8 @@ describe("LeaveController", () => {
     // Assert
     expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
       res,
-      StatusCodes.NO_CONTENT
+      StatusCodes.NO_CONTENT,
+      "No leave requests found."
     );
   });
 
@@ -115,7 +121,7 @@ describe("LeaveController", () => {
       },
       {
         id: 2,
-        user: validAdmin,
+        user: getValidStaffData(),
         startDate: "2025-02-01",
         endDate: "2025-02-10",
       },
@@ -136,7 +142,8 @@ describe("LeaveController", () => {
     // Assert
     expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(
       res,
-      expect.arrayContaining(validLeaveRequests)
+      expect.arrayContaining(validLeaveRequests),
+      StatusCodes.OK
     );
   });
 
