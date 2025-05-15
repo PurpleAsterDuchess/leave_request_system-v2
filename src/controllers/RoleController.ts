@@ -71,7 +71,6 @@ export class RoleController implements IEntityController {
     // role.name = req.body.data.name;
     role.name = req.body.name;
     const errors = await validate(role);
-    console.log("e: ", errors);
     if (errors.length > 0) {
       throw new AppError(
         errors

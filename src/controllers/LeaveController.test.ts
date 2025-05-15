@@ -6,21 +6,7 @@ import { DeleteResult, Repository } from "typeorm";
 import { StatusCodes } from "http-status-codes";
 import { ResponseHandler } from "../helper/ResponseHandler";
 import { Request, Response } from "express";
-import * as classValidator from "class-validator";
-import * as classTransformer from "class-transformer";
 import { mock } from "jest-mock-extended";
-
-const VALIDATOR_CONSTRAINT_PASSWORD_AT_LEAST_10_CHARS =
-  "Password must be at least 10 characters long";
-const VALIDATOR_CONSTRAINT_INVALID_EMAIL = "Must be a valid email address";
-const VALIDATOR_CONSTRAINT_INVALID_ID = "User is required";
-const ERROR_NO_ID_PROVIDED = "No ID provided";
-const INVALID_USER_ID_NUMBER = "User with the provided ID not found";
-const BLANK_USER_NAME = "";
-const VALIDATOR_CONSTRAINT_EMPTY_OR_WHITESPACE =
-  "Name cannot be empty or whitespace";
-const VALIDATOR_CONSTRAINT_MAX_LENGTH_EXCEEDED =
-  "Name must be 30 characters or less";
 
 jest.mock("../helper/ResponseHandler");
 jest.mock("class-validator", () => ({

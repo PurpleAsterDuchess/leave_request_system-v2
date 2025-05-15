@@ -146,8 +146,6 @@ describe("User Entity", () => {
           relation.target === User && relation.propertyName === "role"
       );
 
-      console.log("userRoleRelation:", userRoleRelation);
-
       // Assert
       expect(userRoleRelation).toBeDefined();
       expect(userRoleRelation.relationType).toBe("many-to-one");
@@ -160,7 +158,6 @@ describe("User Entity", () => {
 
       // Act
       const errors = await validate(invalidUser);
-      console.log("errors:", errors);
 
       // Assert
       expect(errors.length).toBe(1);
@@ -178,8 +175,6 @@ describe("User Entity", () => {
         (relation) =>
           relation.target === User && relation.propertyName === "manager"
       );
-
-      console.log("userRoleRelation:", userManagerRelation);
 
       // Assert
       expect(userManagerRelation).toBeDefined();

@@ -9,7 +9,7 @@ import { Request, Response } from "express";
 import * as classValidator from "class-validator";
 import * as classTransformer from "class-transformer";
 import { mock } from "jest-mock-extended";
-import { AppDataSource } from "src/data-source";
+import { AppDataSource } from "../data-source";
 
 const VALIDATOR_CONSTRAINT_PASSWORD_AT_LEAST_10_CHARS =
   "Password must be at least 10 characters long";
@@ -31,6 +31,11 @@ jest.mock("class-validator", () => ({
 jest.mock("class-transformer", () => ({
   ...jest.requireActual("class-transformer"),
   instanceToPlain: jest.fn(),
+}));
+jest.mock("../data-source", () => ({
+  AppDataSource: {
+    getRepository: jest.fn(),
+  },
 }));
 
 describe("StaffLeaveController", () => {
@@ -74,78 +79,91 @@ describe("StaffLeaveController", () => {
 
   let leaveController: StaffLeaveController;
   let mockLeaveRepository: jest.Mocked<Repository<LeaveRequest>>;
+  let mockUserRepository: jest.Mocked<Repository<User>>;
 
   beforeEach(() => {
     mockLeaveRepository = {
-      find: jest.fn(), // Mock the `find` method
+      find: jest.fn(),
+      findOne: jest.fn(),
+      findOneByOrFail: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
     } as unknown as jest.Mocked<Repository<LeaveRequest>>;
 
+    mockUserRepository = {
+      findOneByOrFail: jest.fn(),
+      save: jest.fn(),
+    } as unknown as jest.Mocked<Repository<User>>;
+
+    (AppDataSource.getRepository as jest.Mock).mockImplementation((entity) => {
+      if (entity === LeaveRequest) {
+        return mockLeaveRepository;
+      } else if (entity === User) {
+        return mockUserRepository;
+      }
+      return null;
+    });
+
     leaveController = new StaffLeaveController();
-    leaveController["leaveRepository"] =
-      mockLeaveRepository as Repository<LeaveRequest>;
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it.only("getAll returns only the signed-in staff's leave requests", async () => {
-    const validStaff = getValidStaffData(); // Mock data for a staff user
-    const validAdmin = getValidAdminData(); // Mock data for an admin user
+  it("getAll returns only the signed-in staff's leave requests", async () => {
+    const validStaff = getValidStaffData();
+    const validAdmin = getValidAdminData();
 
-    // Mock leave requests: one for the staff, one for the admin
     const validLeaveRequests = [
       {
-        id: 1,
-        user: { id: validStaff.id, email: validStaff.email }, // Plain object
+        leaveId: 1,
+        user: validStaff,
         startDate: "2025-01-01",
         endDate: "2025-01-10",
       },
       {
-        id: 2,
-        user: { id: validAdmin.id, email: validAdmin.email }, // Plain object
+        leaveId: 2,
+        user: validAdmin,
         startDate: "2025-02-01",
         endDate: "2025-02-10",
       },
-    ];
+    ] as LeaveRequest[];
+
+    const staffLeaveRequests = validLeaveRequests.filter(
+      (leave) => leave.user.id === validStaff.id
+    );
 
     const req = mockRequest();
     const res = mockResponse();
 
     // Simulate the signed-in user being the staff
-    req.signedInUser = { id: validStaff.id };
+    req.signedInUser = { uid: validStaff.id };
 
-    // Mock the repository to return only the leave requests for the signed-in staff
-    (mockLeaveRepository.find as jest.Mock).mockResolvedValue(
-      validLeaveRequests.filter((leave) => leave.user.id === validStaff.id)
-    );
+    mockLeaveRepository.find.mockResolvedValue(staffLeaveRequests);
 
     // Act
     await leaveController.getAll(req as Request, res as Response);
 
     // Assert
-    // Ensure the response only includes the leave requests for the signed-in staff
-    expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(res, [
-      {
-        id: 1,
-        user: validStaff,
-        startDate: "2025-01-01",
-        endDate: "2025-01-10",
-      },
-    ]);
+    expect(mockLeaveRepository.find).toHaveBeenCalledWith({
+      where: { user: { id: validStaff.id } },
+      relations: ["user"],
+    });
+
+    expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(
+      res,
+      staffLeaveRequests
+    );
 
     // Ensure the response does NOT include leave requests for other users
     expect(ResponseHandler.sendSuccessResponse).not.toHaveBeenCalledWith(
       res,
       expect.arrayContaining([
-        {
-          id: 2,
+        expect.objectContaining({
+          leaveId: 2,
           user: validAdmin,
-          startDate: "2025-02-01",
-          endDate: "2025-02-10",
-        },
+        }),
       ])
     );
   });

@@ -36,7 +36,6 @@ describe("LeaveRequest Entity", () => {
 
     // Act
     const errors = await validate(invalidLeaveRequest);
-    console.log("Validation errors:", errors);
 
     // Assert
     expect(errors.length).toBe(1);
