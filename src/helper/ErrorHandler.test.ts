@@ -1,36 +1,39 @@
 import { AppError } from "./AppError";
 import { ErrorHandler } from "./ErrorHandler";
 import { Response } from "express";
+import { ResponseHandler } from "./ResponseHandler";
 
 jest.mock("./Logger", () => ({
   Logger: {
     error: jest.fn(),
   },
 }));
-
 jest.mock("./ResponseHandler", () => ({
-  sendErrorResponse: jest.fn(),
+  ResponseHandler: {
+    sendErrorResponse: jest.fn(),
+  },
 }));
 
 describe("ErrorHandler", () => {
   it("should handle errors correctly", () => {
     // Arrange
     const mockError = new Error("Test error") as AppError;
-    mockError.statusCode = 500;
+    (mockError as any).statusCode = 500;
     const mockResponse = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
-      send: jest.fn(), // Add the send method to fix the issue
     } as unknown as Response;
 
     // Act
     ErrorHandler.handle(mockError, mockResponse);
 
     // Assert
-    expect(mockResponse.status).toHaveBeenCalledWith(500);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      status: "error",
-      message: "Test error",
-    });
+    // If ErrorHandler.handle uses ResponseHandler.sendErrorResponse, check that instead
+    const { ResponseHandler } = require("./ResponseHandler");
+    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
+      mockResponse,
+      500,
+      "Test error"
+    );
   });
 });
