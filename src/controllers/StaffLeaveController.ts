@@ -207,7 +207,7 @@ export class StaffLeaveController implements IEntityController {
 
     ResponseHandler.sendSuccessResponse(
       res,
-      instanceToPlain(leaveRequest),
+      leaveRequest,
       StatusCodes.CREATED
     );
   };
@@ -215,39 +215,59 @@ export class StaffLeaveController implements IEntityController {
   public delete = async (req: Request, res: Response): Promise<void> => {
     const id = req.params.id;
     if (!id) {
-      throw new Error(StaffLeaveController.ERROR_NO_LEAVE_ID_PROVIDED);
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.BAD_REQUEST,
+        StaffLeaveController.ERROR_NO_LEAVE_ID_PROVIDED
+      );
+      return;
     }
 
-    // find a specific leave id and include user
-    const leaveRequest = await this.staffLeaveRepository.findOne({
-      where: { leaveId: id },
-      relations: ["user"],
-    });
+    let leaveRequest;
+    try {
+      leaveRequest = await this.staffLeaveRepository.findOneOrFail({
+        where: { leaveId: id },
+        relations: ["user"],
+      });
+    } catch (err) {
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.NOT_FOUND,
+        StaffLeaveController.ERROR_LEAVE_NOT_FOUND_FOR_DELETION
+      );
+      return;
+    }
 
     if (leaveRequest.user.id !== req.signedInUser.uid) {
       ResponseHandler.sendErrorResponse(
         res,
-        StatusCodes.FORBIDDEN,
+        StatusCodes.UNAUTHORIZED,
         StaffLeaveController.ERROR_UNAUTHORIZED_ACTION
       );
-
       return;
-    } else {
-      const daysDifference = this.dateDiff(
+    }
+
+    const daysDifference = this.dateDiff(
+      res,
+      leaveRequest.startDate,
+      leaveRequest.endDate
+    );
+    if (typeof daysDifference !== "number" || isNaN(daysDifference)) {
+      // dateDiff already sends error response
+      return;
+    }
+
+    leaveRequest.user.remainingAl += daysDifference;
+    await this.userRepository.save(leaveRequest.user);
+
+    const result = await this.staffLeaveRepository.delete(id);
+    if (!result || result.affected === 0) {
+      ResponseHandler.sendErrorResponse(
         res,
-        leaveRequest.startDate,
-        leaveRequest.endDate
+        StatusCodes.NOT_FOUND,
+        StaffLeaveController.ERROR_LEAVE_NOT_FOUND_FOR_DELETION
       );
-
-      const newRemainingAl = leaveRequest.user.remainingAl + daysDifference;
-      leaveRequest.user.remainingAl = newRemainingAl;
-
-      const result = await this.staffLeaveRepository.delete(id);
-      if (result.affected === 0) {
-        throw new Error(
-          StaffLeaveController.ERROR_LEAVE_NOT_FOUND_FOR_DELETION
-        );
-      }
+      return;
     }
 
     ResponseHandler.sendSuccessResponse(

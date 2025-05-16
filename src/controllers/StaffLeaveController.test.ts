@@ -2,24 +2,12 @@ import { StaffLeaveController } from "../controllers/StaffLeaveController";
 import { User } from "../entity/User";
 import { Role } from "../entity/Role";
 import { LeaveRequest } from "../entity/LeaveRequest";
-import { DeleteResult, getRepository, Repository } from "typeorm";
+import { DeleteResult, Repository } from "typeorm";
 import { StatusCodes } from "http-status-codes";
 import { ResponseHandler } from "../helper/ResponseHandler";
 import { Request, Response } from "express";
-import { mock } from "jest-mock-extended";
 import { AppDataSource } from "../data-source";
-
-const VALIDATOR_CONSTRAINT_PASSWORD_AT_LEAST_10_CHARS =
-  "Password must be at least 10 characters long";
-const VALIDATOR_CONSTRAINT_INVALID_EMAIL = "Must be a valid email address";
-const VALIDATOR_CONSTRAINT_INVALID_ID = "User is required";
-const ERROR_NO_ID_PROVIDED = "No ID provided";
-const INVALID_USER_ID_NUMBER = "User with the provided ID not found";
-const BLANK_USER_NAME = "";
-const VALIDATOR_CONSTRAINT_EMPTY_OR_WHITESPACE =
-  "Name cannot be empty or whitespace";
-const VALIDATOR_CONSTRAINT_MAX_LENGTH_EXCEEDED =
-  "Name must be 30 characters or less";
+import * as classValidator from "class-validator";
 
 jest.mock("../helper/ResponseHandler");
 jest.mock("class-validator", () => ({
@@ -218,6 +206,140 @@ describe("StaffLeaveController", () => {
     expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(
       res,
       validLeaveRequest
+    );
+  });
+
+  it("update returns an error if the leave id does not exist", async () => {
+    // Arrange
+    const req = mockRequest({ id: 12 });
+    const res = mockResponse();
+
+    // Act
+    await leaveController.update(req as Request, res as Response);
+
+    // Assert
+    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
+      res,
+      StatusCodes.NOT_FOUND,
+      "Failed to retrieve leave request"
+    );
+  });
+
+  it("update returns an error if there is no change", async () => {
+    // Arrange
+    const validAdminDetails = getValidAdminData();
+    validAdminDetails.remainingAl = 10;
+    const validLeaveRequest = getValidLeaveRequest();
+    validLeaveRequest.user = validAdminDetails;
+
+    const req = mockRequest({}, validLeaveRequest);
+    const res = mockResponse();
+
+    mockLeaveRepository.findOneByOrFail.mockResolvedValue(validLeaveRequest);
+
+    // Act
+    await leaveController.update(req as Request, res as Response);
+
+    // Assert
+    expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
+      res,
+      StatusCodes.NOT_MODIFIED,
+      "No changes made to the leave request"
+    );
+  });
+
+  it("update returns SUCCESS if there is a valid change", async () => {
+    // Arrange
+    const validStaffDetails = getValidStaffData();
+    validStaffDetails.remainingAl = 10;
+    const validLeaveRequest = getValidLeaveRequest();
+    validLeaveRequest.user = validStaffDetails;
+
+    const updatedStartDate = "2000-01-05";
+    const updatedEndDate = "2000-01-15";
+
+    const req = mockRequest(
+      {},
+      {
+        id: validLeaveRequest.leaveId,
+        startDate: updatedStartDate,
+        endDate: updatedEndDate,
+      }
+    );
+
+    const res = mockResponse();
+
+    mockLeaveRepository.findOneByOrFail.mockResolvedValue(validLeaveRequest);
+    mockLeaveRepository.save.mockResolvedValue({
+      ...validLeaveRequest,
+      startDate: updatedStartDate,
+      endDate: updatedEndDate,
+    });
+    mockUserRepository.findOneByOrFail.mockResolvedValue(validStaffDetails);
+    mockUserRepository.save.mockResolvedValue(validStaffDetails);
+
+    // Act
+    await leaveController.update(req as Request, res as Response);
+
+    // Assert
+    expect(mockLeaveRepository.findOneByOrFail).toHaveBeenCalledWith({
+      leaveId: validLeaveRequest.leaveId,
+    });
+    expect(mockLeaveRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startDate: updatedStartDate,
+        endDate: updatedEndDate,
+      })
+    );
+    expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(
+      res,
+      expect.objectContaining({
+        startDate: updatedStartDate,
+        endDate: updatedEndDate,
+      }),
+      StatusCodes.OK
+    );
+  });
+
+  it("delete returns SUCCESS if a valid leave id is supplied", async () => {
+    // Arrange
+    const validStaffDetails = getValidStaffData();
+    validStaffDetails.remainingAl = 10;
+    const validLeaveRequest = getValidLeaveRequest();
+    validLeaveRequest.user = validStaffDetails;
+
+    const req = mockRequest({ id: validLeaveRequest.leaveId });
+    const res = mockResponse();
+
+    // signedInUser should be an object with a uid property
+    req.signedInUser = { uid: validStaffDetails.id };
+
+    // Mock the repository to return the leave request
+    mockLeaveRepository.findOneOrFail = jest
+      .fn()
+      .mockResolvedValue(validLeaveRequest);
+    mockUserRepository.save.mockResolvedValue(validStaffDetails);
+    const deleteResult: DeleteResult = { affected: 1, raw: {} } as DeleteResult;
+    mockLeaveRepository.delete.mockResolvedValue(deleteResult);
+
+    // Act
+    await leaveController.delete(req as Request, res as Response);
+
+    // Assert
+    expect(mockLeaveRepository.findOneOrFail).toHaveBeenCalledWith({
+      where: { leaveId: validLeaveRequest.leaveId },
+      relations: ["user"],
+    });
+    expect(mockUserRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({ id: validStaffDetails.id })
+    );
+    expect(mockLeaveRepository.delete).toHaveBeenCalledWith(
+      validLeaveRequest.leaveId
+    );
+    expect(ResponseHandler.sendSuccessResponse).toHaveBeenCalledWith(
+      res,
+      "Leave request deleted",
+      StatusCodes.OK
     );
   });
 });

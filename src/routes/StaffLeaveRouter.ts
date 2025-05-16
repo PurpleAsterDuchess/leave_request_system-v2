@@ -4,7 +4,7 @@ import { IRouter } from "./IRouter";
 
 export class StaffLeaveRouter implements IRouter {
   public routeName = "staff";
-  public basePath = "/api/leave";
+  public basePath = "/api/leave/staff";
   public authenticate = true;
 
   private router: Router;

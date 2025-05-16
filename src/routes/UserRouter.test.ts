@@ -15,6 +15,9 @@ const mockUserController = {
   getByEmail: jest.fn((req, res) =>
     res.status(StatusCodes.OK).json({ email: req.params.emailAddress })
   ),
+  resetAl: jest.fn((req, res) =>
+    res.status(StatusCodes.OK).json({ id: req.params.id })
+  ),
   create: jest.fn((req, res) => res.status(StatusCodes.CREATED).json(req.body)),
   update: jest.fn((req, res) => res.status(StatusCodes.OK).json(req.body)),
 } as unknown as UserController;
