@@ -95,8 +95,8 @@ export class StaffLeaveController implements IEntityController {
 
     // Fetch the existing leave request from the database
     const leaveRequest = await this.staffLeaveRepository.findOneByOrFail({
-      leaveId: id,
-    });
+        leaveId: id,
+      });
 
     if (!leaveRequest) {
       ResponseHandler.sendErrorResponse(
@@ -113,27 +113,24 @@ export class StaffLeaveController implements IEntityController {
     const isEndDateChanged = endDate && endDate !== leaveRequest.endDate;
 
     if (isStartDateChanged || isEndDateChanged) {
-      // Recalculate the days difference
-      const newDaysDifference = this.calculateDays(
-        startDate || leaveRequest.startDate,
-        endDate || leaveRequest.endDate
-      );
-
-      // Update the leave request with new dates and days difference
-      if (isStartDateChanged) leaveRequest.startDate = startDate;
-      if (isEndDateChanged) leaveRequest.endDate = endDate;
-
-      const user = await this.userRepository.findOneByOrFail({
-        id: leaveRequest.user.id,
-      });
+      // Calculate previous and new days difference
       const previousDaysDifference = this.calculateDays(
         leaveRequest.startDate,
         leaveRequest.endDate
       );
+      const newDaysDifference = this.calculateDays(
+        startDate || leaveRequest.startDate,
+        endDate || leaveRequest.endDate
+      );      // Update the leave request with new dates
+      if (isStartDateChanged) leaveRequest.startDate = startDate;
+      if (isEndDateChanged) leaveRequest.endDate = endDate;
 
+      // Update user's remaining AL
+      const user = await this.userRepository.findOneByOrFail({
+        id: leaveRequest.user.id,
+      });
       user.remainingAl += previousDaysDifference;
       user.remainingAl -= newDaysDifference;
-
       await this.userRepository.save(user);
 
       leaveRequest.updatedAt = new Date();
@@ -142,7 +139,11 @@ export class StaffLeaveController implements IEntityController {
       ResponseHandler.sendSuccessResponse(res, leaveRequest, StatusCodes.OK);
     } else {
       // No changes to startDate or endDate, just return the original request
-      ResponseHandler.sendSuccessResponse(res, leaveRequest, StatusCodes.OK);
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.NOT_MODIFIED,
+        "No changes made to the leave request"
+      );
     }
   };
 
