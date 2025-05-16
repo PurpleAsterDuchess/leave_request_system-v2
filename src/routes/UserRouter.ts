@@ -2,6 +2,7 @@ import { Router } from "express";
 import { UserController } from "@controllers/UserController";
 import { IRouter } from "./IRouter";
 import { IGetByEmail } from "@controllers/IGetByEmail";
+import { IResetAl } from "@controllers/IResetAl";
 
 export class UserRouter implements IRouter {
   public routeName = "users";
@@ -10,7 +11,7 @@ export class UserRouter implements IRouter {
 
   constructor(
     private router: Router,
-    private userController: IGetByEmail
+    private userController: IGetByEmail & IResetAl
   ) {
     this.addRoutes();
   }
@@ -27,6 +28,7 @@ export class UserRouter implements IRouter {
 
     // Post
     this.router.post("/", this.userController.create);
+    this.router.post("/:id/reset-Al", this.userController.resetAl);
 
     // Delete
     this.router.delete("/:id", this.userController.delete);

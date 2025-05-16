@@ -157,8 +157,8 @@ export class UserController implements IEntityController {
     if (!id) {
       throw new AppError("No ID provided");
     }
-    
-    if (req.signedInUser.role.id === 1 ) {
+
+    if (req.signedInUser.role.id === 1) {
       const result = await this.userRepository.delete(id);
       if (result.affected === 0) {
         throw new AppError("User with the provided ID not found");
@@ -243,5 +243,30 @@ export class UserController implements IEntityController {
     }
 
     ResponseHandler.sendSuccessResponse(res, user, StatusCodes.OK);
+  };
+
+  public resetAl = async (req: Request, res: Response): Promise<void> => {
+    if (req.signedInUser.role.id === 1) {
+      const user = await this.userRepository.findOneBy({
+        id: Number(req.params.id),
+      });
+      if (!user) {
+        ResponseHandler.sendErrorResponse(
+          res,
+          StatusCodes.NOT_FOUND,
+          UserController.ERROR_USER_NOT_FOUND
+        );
+        return;
+      }
+      user.remainingAl = user.initialAlTotal;
+      await this.userRepository.save(user);
+      ResponseHandler.sendSuccessResponse(res, user, StatusCodes.OK);
+    } else {
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.UNAUTHORIZED,
+        "Unauthorized action"
+      );
+    }
   };
 }
