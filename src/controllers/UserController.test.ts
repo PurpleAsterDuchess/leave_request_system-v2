@@ -100,6 +100,7 @@ describe("UserController", () => {
   it("getAll returns NO_CONTENT if no users exist", async () => {
     // Arrange
     const req = mockRequest();
+    req.signedInUser = getValidAdminData();
     const res = mockResponse();
     //Simulate no users in the database
     mockUserRepository.find.mockResolvedValue([]);
@@ -117,6 +118,7 @@ describe("UserController", () => {
   it("getAll returns INTERNAL_SERVER_ERROR if server fails to retrieve users", async () => {
     // Arrange
     const req = mockRequest();
+    req.signedInUser = getValidAdminData();
     const res = mockResponse();
     mockUserRepository.find.mockRejectedValue(
       new Error("Database connection error")
@@ -128,10 +130,11 @@ describe("UserController", () => {
     ).rejects.toThrow("Database connection error");
   });
 
-  it("getAll will return all users", async () => {
+  it("getAll will return all users when called with admin", async () => {
     // Arrange
     const mockUsers: User[] = [getValidManagerData(), getValidStaffData()];
     const req = mockRequest();
+    req.signedInUser = getValidAdminData();
     const res = mockResponse();
     mockUserRepository.find.mockResolvedValue(mockUsers);
 
