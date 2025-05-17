@@ -91,12 +91,12 @@ export class StaffLeaveController implements IEntityController {
 
   // Staff can cancel their own leave
   public update = async (req: Request, res: Response): Promise<void> => {
-    const { id, startDate, endDate } = req.body;
+    const { id, startDate, endDate, status } = req.body;
 
     // Fetch the existing leave request from the database
     const leaveRequest = await this.staffLeaveRepository.findOneByOrFail({
-        leaveId: id,
-      });
+      leaveId: id,
+    });
 
     if (!leaveRequest) {
       ResponseHandler.sendErrorResponse(
@@ -105,6 +105,47 @@ export class StaffLeaveController implements IEntityController {
         StaffLeaveController.ERROR_FAILED_TO_RETRIEVE_LEAVE_REQUEST
       );
       return;
+    }
+
+    if (status) {
+      if (status !== "canceled") {
+        ResponseHandler.sendErrorResponse(
+          res,
+          StatusCodes.UNAUTHORIZED,
+          StaffLeaveController.ERROR_UNAUTHORIZED_ACTION
+        );
+        return;
+      }
+      if (leaveRequest.status === "canceled") {
+        ResponseHandler.sendErrorResponse(
+          res,
+          StatusCodes.BAD_REQUEST,
+          "Leave request is already canceled."
+        );
+        return;
+      }
+
+      // Set status to canceled and update user's AL
+      leaveRequest.status = "canceled";
+      const user = await this.userRepository.findOneByOrFail({
+        id: leaveRequest.user.id,
+      });
+      const daysDifference = this.calculateDays(
+        leaveRequest.startDate,
+        leaveRequest.endDate
+      );
+      user.remainingAl += daysDifference;
+      await this.userRepository.save(user);
+      leaveRequest.updatedAt = new Date();
+      await this.staffLeaveRepository.save(leaveRequest);
+      ResponseHandler.sendSuccessResponse(res, leaveRequest, StatusCodes.OK);
+      return;
+    } else {
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.NOT_MODIFIED,
+        "No changes made to the leave request"
+      );
     }
 
     // Check if the startDate or endDate has changed
@@ -121,7 +162,9 @@ export class StaffLeaveController implements IEntityController {
       const newDaysDifference = this.calculateDays(
         startDate || leaveRequest.startDate,
         endDate || leaveRequest.endDate
-      );      // Update the leave request with new dates
+      );
+
+      // Update the leave request with new dates
       if (isStartDateChanged) leaveRequest.startDate = startDate;
       if (isEndDateChanged) leaveRequest.endDate = endDate;
 
@@ -137,13 +180,6 @@ export class StaffLeaveController implements IEntityController {
       await this.staffLeaveRepository.save(leaveRequest);
 
       ResponseHandler.sendSuccessResponse(res, leaveRequest, StatusCodes.OK);
-    } else {
-      // No changes to startDate or endDate, just return the original request
-      ResponseHandler.sendErrorResponse(
-        res,
-        StatusCodes.NOT_MODIFIED,
-        "No changes made to the leave request"
-      );
     }
   };
 
@@ -205,11 +241,7 @@ export class StaffLeaveController implements IEntityController {
 
     leaveRequest = await this.staffLeaveRepository.save(leaveRequest);
 
-    ResponseHandler.sendSuccessResponse(
-      res,
-      leaveRequest,
-      StatusCodes.CREATED
-    );
+    ResponseHandler.sendSuccessResponse(res, leaveRequest, StatusCodes.CREATED);
   };
 
   public delete = async (req: Request, res: Response): Promise<void> => {

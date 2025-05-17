@@ -124,7 +124,7 @@ export class LeaveController implements IEntityController {
     } else {
       ResponseHandler.sendErrorResponse(
         res,
-        StatusCodes.FORBIDDEN,
+        StatusCodes.UNAUTHORIZED,
         LeaveController.ERROR_UNAUTHORIZED_ACTION
       );
     }
