@@ -9,7 +9,7 @@ import { LeaveRequest } from "../entity/LeaveRequest";
 import { IEntityController } from "./IEntityControllers";
 
 export class LeaveController implements IEntityController {
-  public static readonly ERROR_NO_USER_ID_PROVIDED = "No ID provided";
+  public static readonly ERROR_NO_LEAVE_ID_PROVIDED = "No ID provided";
   public static readonly ERROR_LEAVE_NOT_FOUND_FOR_DELETION =
     "Leave with the provided ID not found";
   public static readonly ERROR_INVALID_DATE = "Invalid start or end date";
@@ -220,7 +220,12 @@ export class LeaveController implements IEntityController {
   public delete = async (req: Request, res: Response): Promise<void> => {
     const id = req.params.id;
     if (!id) {
-      throw new Error("No ID provided");
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.BAD_REQUEST,
+        LeaveController.ERROR_NO_LEAVE_ID_PROVIDED
+      );
+      return;
     }
 
     // find a specific leave id and include user
@@ -229,27 +234,47 @@ export class LeaveController implements IEntityController {
       relations: ["user"],
     });
 
+    if (!leaveRequest) {
+      ResponseHandler.sendErrorResponse(
+        res,
+        StatusCodes.NOT_FOUND,
+        LeaveController.ERROR_LEAVE_NOT_FOUND_FOR_DELETION
+      );
+      return;
+    }
+
+    // Only the owner of the leave can delete it
     if (leaveRequest.user.id !== req.signedInUser.uid) {
       ResponseHandler.sendErrorResponse(
         res,
-        StatusCodes.FORBIDDEN,
+        StatusCodes.UNAUTHORIZED,
         LeaveController.ERROR_UNAUTHORIZED_ACTION
       );
       return;
-    } else {
-      const daysDifference = this.dateDiff(
+    }
+
+    // Calculate days difference and update user's remaining AL
+    const daysDifference = this.dateDiff(
+      res,
+      leaveRequest.startDate,
+      leaveRequest.endDate
+    );
+    if (typeof daysDifference !== "number" || isNaN(daysDifference)) {
+      // dateDiff already sends error response
+      return;
+    }
+
+    leaveRequest.user.remainingAl += daysDifference;
+    await this.userRepository.save(leaveRequest.user);
+
+    const result = await this.leaveRepository.delete(id);
+    if (result.affected === 0) {
+      ResponseHandler.sendErrorResponse(
         res,
-        leaveRequest.startDate,
-        leaveRequest.endDate
+        StatusCodes.NOT_FOUND,
+        LeaveController.ERROR_LEAVE_NOT_FOUND_FOR_DELETION
       );
-
-      const newRemainingAl = leaveRequest.user.remainingAl + daysDifference;
-      leaveRequest.user.remainingAl = newRemainingAl;
-
-      const result = await this.leaveRepository.delete(id);
-      if (result.affected === 0) {
-        throw new Error(LeaveController.ERROR_LEAVE_NOT_FOUND_FOR_DELETION);
-      }
+      return;
     }
 
     ResponseHandler.sendSuccessResponse(
