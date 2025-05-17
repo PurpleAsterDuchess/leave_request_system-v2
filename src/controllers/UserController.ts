@@ -141,7 +141,7 @@ export class UserController implements IEntityController {
       ResponseHandler.sendErrorResponse(
         res,
         StatusCodes.UNAUTHORIZED,
-        "Unauthorized action"
+        "Invalid authorization for this action"
       );
     }
 
@@ -167,7 +167,7 @@ export class UserController implements IEntityController {
       ResponseHandler.sendErrorResponse(
         res,
         StatusCodes.UNAUTHORIZED,
-        "Unauthorized action"
+        "Invalid authorization for this action"
       );
     }
     ResponseHandler.sendSuccessResponse(res, "User deleted", StatusCodes.OK);
@@ -238,7 +238,7 @@ export class UserController implements IEntityController {
       ResponseHandler.sendErrorResponse(
         res,
         StatusCodes.UNAUTHORIZED,
-        "Unauthorized action"
+        "Invalid authorization for this action"
       );
     }
 
@@ -265,7 +265,7 @@ export class UserController implements IEntityController {
       ResponseHandler.sendErrorResponse(
         res,
         StatusCodes.UNAUTHORIZED,
-        "Unauthorized action"
+        "Invalid authorization for this action"
       );
     }
   };

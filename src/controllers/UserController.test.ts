@@ -313,7 +313,7 @@ describe("UserController", () => {
     expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
       res,
       StatusCodes.UNAUTHORIZED,
-      "Unauthorized action"
+      "Invalid authorization for this action"
     );
     expect(mockUserRepository.save).not.toHaveBeenCalled();
   });
@@ -391,7 +391,7 @@ describe("UserController", () => {
     expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
       res,
       StatusCodes.UNAUTHORIZED,
-      "Unauthorized action"
+      "Invalid authorization for this action"
     );
   });
 
@@ -576,7 +576,7 @@ describe("UserController", () => {
     expect(ResponseHandler.sendErrorResponse).toHaveBeenCalledWith(
       res,
       StatusCodes.UNAUTHORIZED,
-      "Unauthorized action"
+      "Invalid authorization for this action"
     );
   });
 });
