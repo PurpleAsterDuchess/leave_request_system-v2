@@ -19,6 +19,7 @@ jest.mock("winston", () => {
       colorize: jest.fn(),
     },
     transports: {
+        File: jest.fn(),
       Console: jest.fn(),
     },
   };

@@ -1,4 +1,11 @@
 import * as winston from "winston";
+import fs from "fs";
+import path from "path";
+
+const logDir = path.join(__dirname, "../../logs");
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
 export class Logger {
   private static instance: winston.Logger = winston.createLogger({
     level: process.env.NODE_ENV === "production" ? "info" : "debug",
@@ -8,6 +15,13 @@ export class Logger {
       winston.format.simple()
     ),
     transports: [
+      new winston.transports.File({
+        filename: path.join(__dirname, "../../logs/error.log"),
+        level: "error",
+      }),
+      new winston.transports.File({
+        filename: path.join(__dirname, "../../logs/combined.log"),
+      }),
       new winston.transports.Console({
         format: winston.format.combine(
           winston.format.colorize(),
