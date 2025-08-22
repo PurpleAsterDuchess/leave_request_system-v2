@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { LeaveController } from "@controllers/LeaveController";
+import { LeaveController } from "src/api/controllers/LeaveController";
 import { IRouter } from "./IRouter";
 
 export class LeaveRouter implements IRouter {

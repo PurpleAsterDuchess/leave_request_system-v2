@@ -1,4 +1,4 @@
-import { UserController } from "../controllers/UserController";
+import { UserController } from "./UserController";
 import { User } from "../entity/User";
 import { Role } from "../entity/Role";
 import { DeleteResult, Repository } from "typeorm";

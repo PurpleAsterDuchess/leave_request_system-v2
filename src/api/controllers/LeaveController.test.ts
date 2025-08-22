@@ -1,4 +1,4 @@
-import { LeaveController } from "../controllers/LeaveController";
+import { LeaveController } from "./LeaveController";
 import { User } from "../entity/User";
 import { Role } from "../entity/Role";
 import { LeaveRequest } from "../entity/LeaveRequest";
@@ -77,9 +77,8 @@ describe("LeaveController", () => {
     const req = mockRequest();
     const res = mockResponse();
 
-    const validAdmin = getValidAdminData()
+    const validAdmin = getValidAdminData();
     req.signedInUser = validAdmin;
-
 
     // Simulate no leave requests in the database
     mockLeaveRepository.find.mockResolvedValue([]);

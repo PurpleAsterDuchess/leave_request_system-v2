@@ -1,4 +1,4 @@
-import { RoleController } from "../controllers/RoleController";
+import { RoleController } from "./RoleController";
 import { Role } from "../entity/Role";
 import { Repository } from "typeorm";
 import { StatusCodes } from "http-status-codes";

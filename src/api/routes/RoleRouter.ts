@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { IRouter } from "./IRouter";
-import { IEntityController } from "@controllers/IEntityControllers";
+import { IEntityController } from "src/api/controllers/IEntityControllers";
 
 export class RoleRouter implements IRouter {
   public routeName = "roles";

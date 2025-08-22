@@ -1,0 +1,47 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+/* You can add custom Bootstrap overrides or additional styles below */
+.sidebar-nav {
+  list-style: none;
+}
+
+.navbar-brand {
+  width: 10%;
+}
+
+.center-icon {
+  display: grid;
+  place-content: center;
+}
+.left-align {
+  display: flex;
+  justify-content: left;
+  align-items: left;
+  padding-right: 10px;
+}
+
+.right-align {
+  display: flex;
+  justify-content: right;
+  align-items: right;
+  padding-left: 10px;
+}
+
+.sidebar-narrow {
+  width: 10%;
+}
+
+.comfy {
+  padding: 20px;
+}
+
+.leave_box {
+  background-color: #7dea7d;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+  display: flex;
+  align-items: left;
+  width: 20%;
+  height: 20%;
+}

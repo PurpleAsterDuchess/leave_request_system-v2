@@ -13,9 +13,9 @@
     // tidy imports
     "baseUrl": "./",
     "paths": {
-      "@helper/*": ["src/helper/*"],
-      "@controllers/*": ["src/controllers/*"],
-      "@entity/*": ["src/entity/*"],
+      "@helper/*": ["src/api/helper/*"],
+      "@controllers/*": ["src/api/controllers/*"],
+      "@entity/*": ["src/api/entity/*"],
     }
   },
   "include": ["src/**/*"],

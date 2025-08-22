@@ -1,7 +1,7 @@
 import request from "supertest";
 import express, { Router } from "express";
 import { LoginRouter } from "./LoginRouter";
-import { LoginController } from "@controllers/LoginController";
+import { LoginController } from "src/api/controllers/LoginController";
 import { StatusCodes } from "http-status-codes";
 
 const mockLoginController = {

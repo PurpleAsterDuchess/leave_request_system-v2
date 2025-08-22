@@ -1,4 +1,4 @@
-import { StaffLeaveController } from "../controllers/StaffLeaveController";
+import { StaffLeaveController } from "./StaffLeaveController";
 import { User } from "../entity/User";
 import { Role } from "../entity/Role";
 import { LeaveRequest } from "../entity/LeaveRequest";

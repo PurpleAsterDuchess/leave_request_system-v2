@@ -1,6 +1,6 @@
 import { RequestHandler, Request, Response, NextFunction } from "express";
-import { Logger } from "../helper/Logger";
-import { ResponseHandler } from "../helper/ResponseHandler";
+import { Logger } from "./Logger";
+import { ResponseHandler } from "./ResponseHandler";
 import { StatusCodes } from "http-status-codes";
 import rateLimit from "express-rate-limit";
 import jwt from "jsonwebtoken";
