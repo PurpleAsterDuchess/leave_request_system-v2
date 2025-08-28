@@ -13,6 +13,7 @@
   display: grid;
   place-content: center;
 }
+
 .left-align {
   display: flex;
   justify-content: left;
@@ -33,6 +34,31 @@
 
 .comfy {
   padding: 20px;
+}
+
+.square:before {
+  content: "";
+  display: block;
+  padding-top: 100%;
+}
+
+.square {
+  border-radius: 5px;
+}
+
+.leave-info {
+  background-color: #7dea7d;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+  display: flex;
+}
+
+.center-text {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
 
 .leave_box {
