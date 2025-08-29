@@ -1,9 +1,9 @@
 import Card from "react-bootstrap/Card";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
-import Reach, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
-function LeaveCards() {
+export const LeaveCards = () => {
   const [leaveData, setLeaveData] = useState(null);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ function LeaveCards() {
     <>
       <Row xs={1} md={3} className="g-4 comfy">
         {Array.from({ length: 3 }).map((_, idx) => (
-          <Col key={idx}>
+          <div key={idx}>
             <Card>
               <div className="container">
                 <div className="row">
@@ -47,11 +47,9 @@ function LeaveCards() {
                 </div>
               </div>
             </Card>
-          </Col>
+          </div>
         ))}
       </Row>
     </>
   );
-}
-
-export default LeaveCards;
+};

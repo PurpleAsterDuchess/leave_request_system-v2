@@ -1,6 +1,20 @@
-export const SideBar = () => {
+type SideBarProps = {
+  show: boolean;
+  setShow: (show: boolean) => void;
+};
+
+export const SideBar = ({ show, setShow }: SideBarProps) => {
+  if (!show) return null;
+
   return (
     <div className="sidebar sidebar-narrow border-end">
+      <button
+        type="button"
+        className="btn-close right-align"
+        data-bs-dismiss="offcanvas"
+        aria-label="Close"
+        onClick={() => setShow(false)}
+      ></button>
       <ul className="sidebar-nav">
         <li className="nav-item">
           <a className="nav-link left-align" href="#">
@@ -35,8 +49,8 @@ export const SideBar = () => {
               alt="Team leave"
               className="d-inline-block align-top"
             />
+            <p className="right-align">Team Leave</p>
           </a>
-          <p className="right-align">Team Leave</p>
         </li>
       </ul>
     </div>

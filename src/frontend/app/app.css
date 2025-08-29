@@ -71,3 +71,11 @@
   width: 20%;
   height: 20%;
 }
+.main-content {
+  transition: margin-left 0.3s;
+  margin-left: 0;
+}
+
+.main-content.shifted {
+  margin-left: 300px; /* Set this to your sidebar's width */
+}

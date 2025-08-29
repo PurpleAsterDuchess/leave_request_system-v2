@@ -1,8 +1,11 @@
 import { useState } from "react";
 
-function TestComponent() {
-  const [show, setShow] = useState(true);
+type TestComponentProps = {
+  show: boolean;
+  setShow: (show: boolean) => void;
+};
 
+function TestComponent({ show, setShow }: TestComponentProps) {
   if (!show) return null;
 
   return (

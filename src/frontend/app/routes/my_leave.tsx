@@ -1,6 +1,7 @@
 import type { Route } from "./+types/home";
 import { NavBar } from "../components/navbar";
 import { SideBar } from "../components/sidebar";
+import { useState } from "react";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -10,10 +11,12 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function MyLeave() {
+  const [showOffcanvas, setShowOffcanvas] = useState(true);
+
   return (
     <>
       <NavBar />
-      <SideBar />
+      <SideBar show={showOffcanvas} setShow={setShowOffcanvas} />
     </>
   );
 }
