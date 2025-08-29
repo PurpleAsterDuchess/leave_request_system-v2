@@ -11,12 +11,12 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function MyLeave() {
-  const [showOffcanvas, setShowOffcanvas] = useState(true);
+  const [collapsed, setCollapsed] = useState(true);
 
   return (
     <>
       <NavBar />
-      <SideBar show={showOffcanvas} setShow={setShowOffcanvas} />
+      <SideBar collapsed={collapsed} setCollapsed={setCollapsed} />
     </>
   );
 }

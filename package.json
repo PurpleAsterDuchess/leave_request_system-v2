@@ -30,8 +30,8 @@
     "winston": "^3.17.0"
   },
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "dev": "cross-env NODE_ENV=development nodemon src/index.ts",
+    "start": "ts-node src/api/index.ts",
+    "dev": "cross-env NODE_ENV=development nodemon src/api/index.ts",
     "typeorm": "typeorm-ts-node-commonjs",
     "test": "jest",
     "test:watch": "jest --watch",
