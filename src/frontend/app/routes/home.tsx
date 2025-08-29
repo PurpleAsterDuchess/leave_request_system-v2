@@ -12,12 +12,12 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  const [showOffcanvas, setShowOffcanvas] = useState(true);
+  const [collapsed, setCollapsed] = useState(true);
   return (
     <>
       <NavBar />
-      <SideBar show={showOffcanvas} setShow={setShowOffcanvas} />
-      <div className={showOffcanvas ? "main-content shifted" : "main-content"}>
+      <SideBar collapsed={collapsed} setCollapsed={setCollapsed} />
+      <div className={collapsed ? "main-content shifted" : "main-content"}>
         <LeaveCards />
       </div>
     </>

@@ -1,35 +1,37 @@
+import React, { useState } from "react";
+
 type SideBarProps = {
-  show: boolean;
-  setShow: (show: boolean) => void;
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
 };
 
-export const SideBar = ({ show, setShow }: SideBarProps) => {
-  if (!show) return null;
+export const SideBar = ({ collapsed, setCollapsed }: SideBarProps) => {
+  if (!collapsed) return null;
 
   return (
-    <div className="sidebar sidebar-narrow border-end">
+    <div className={`sidebar border-end${collapsed ? " collapsed" : ""}`}>
       <button
         type="button"
-        className="btn-close right-align"
-        data-bs-dismiss="offcanvas"
-        aria-label="Close"
-        onClick={() => setShow(false)}
-      ></button>
+        className="btn btn-secondary"
+        style={{ margin: "10px" }}
+        onClick={() => setCollapsed(!collapsed)}
+      >
+        {collapsed ? "Expand" : "Collapse"}
+      </button>
       <ul className="sidebar-nav">
         <li className="nav-item">
           <a className="nav-link left-align" href="#">
-            <i className="nav-icon cil-speedometer"></i>
             <img
               src="/dashboard.png"
               height="30"
               alt="Dashboard"
               className="d-inline-block align-top"
             />
-            <p className="right-align">Dashboard</p>
+            {!collapsed && <p className="right-align">Dashboard</p>}
           </a>
         </li>
         <li className="nav-item">
-          <a className="nav-link left-align" href="../routes/my_leave.tsx">
+          <a className="nav-link left-align" href="/my_leave">
             <i className="nav-icon cil-speedometer"></i>
             <img
               src="/user.png"
@@ -37,19 +39,18 @@ export const SideBar = ({ show, setShow }: SideBarProps) => {
               alt="My leave"
               className="d-inline-block align-top"
             />
-            <p className="right-align">My Leave</p>
+            {!collapsed && <p className="right-align">My Leave</p>}
           </a>
         </li>
         <li className="nav-item">
           <a className="nav-link left-align" href="#">
-            <i className="nav-icon cil-cloud-download"></i>
             <img
               src="/group.png"
               height="30"
               alt="Team leave"
               className="d-inline-block align-top"
             />
-            <p className="right-align">Team Leave</p>
+            {!collapsed && <p className="right-align">Team Leave</p>}
           </a>
         </li>
       </ul>

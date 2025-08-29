@@ -1,9 +1,6 @@
 @import "bootstrap/dist/css/bootstrap.min.css";
 
 /* You can add custom Bootstrap overrides or additional styles below */
-.sidebar-nav {
-  list-style: none;
-}
 
 .navbar-brand {
   width: 10%;
@@ -26,10 +23,6 @@
   justify-content: right;
   align-items: right;
   padding-left: 10px;
-}
-
-.sidebar-narrow {
-  width: 10%;
 }
 
 .comfy {
@@ -77,5 +70,30 @@
 }
 
 .main-content.shifted {
-  margin-left: 300px; /* Set this to your sidebar's width */
+  margin-left: 15rem;
+}
+/* sidebar */
+
+.sidebar-nav {
+  list-style: none;
+}
+
+.sidebar-narrow {
+  width: 10%;
+}
+
+.sidebar {
+  width: 15rem;
+  transition: width 0.3s;
+}
+.sidebar.collapsed {
+  width: 5%;
+}
+.sidebar .right-align {
+  transition: opacity 0.3s;
+}
+.sidebar.collapsed .right-align {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
 }
