@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AppDataSource } from "../data-source";
+import { AppDataSource } from "../../../data-source";
 import { Role } from "../entity/Role";
 import { Repository } from "typeorm";
 import { StatusCodes } from "http-status-codes";

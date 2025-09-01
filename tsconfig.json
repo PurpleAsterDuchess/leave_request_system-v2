@@ -15,9 +15,9 @@
     "paths": {
       "@helper/*": ["src/api/helper/*"],
       "@controllers/*": ["src/api/controllers/*"],
-      "@entity/*": ["src/api/entity/*"],
+      "@entity/*": ["src/api/entity/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "data-source.ts", "src/api/Server.ts"],
   "exclude": ["node_modules"]
 }

@@ -1,4 +1,4 @@
-import { AppDataSource } from "../data-source";
+import { AppDataSource } from "../../../data-source";
 import { User } from "../entity/User";
 import { Repository } from "typeorm";
 import { ResponseHandler } from "../helper/ResponseHandler";

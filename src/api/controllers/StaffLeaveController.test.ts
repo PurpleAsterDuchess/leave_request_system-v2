@@ -6,7 +6,7 @@ import { DeleteResult, Repository } from "typeorm";
 import { StatusCodes } from "http-status-codes";
 import { ResponseHandler } from "../helper/ResponseHandler";
 import { Request, Response } from "express";
-import { AppDataSource } from "../data-source";
+import { AppDataSource } from "../../../data-source";
 import * as classValidator from "class-validator";
 
 jest.mock("../helper/ResponseHandler");

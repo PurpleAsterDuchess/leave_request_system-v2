@@ -1,6 +1,6 @@
 import { Server } from "./Server";
 import { Router } from "express";
-import { AppDataSource } from "./data-source";
+import { AppDataSource } from "../../data-source";
 
 import { RoleRouter } from "./routes/RoleRouter";
 import { RoleController } from "./controllers/RoleController";
@@ -30,7 +30,7 @@ const routers = [
   new RoleRouter(Router(), new RoleController()),
   new UserRouter(Router(), new UserController()),
   new LeaveRouter(Router(), new LeaveController()),
-  new StaffLeaveRouter(Router(), new StaffLeaveController())
+  new StaffLeaveRouter(Router(), new StaffLeaveController()),
 ];
 
 // Instantiate/start the server

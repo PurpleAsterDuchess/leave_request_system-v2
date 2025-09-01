@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AppDataSource } from "../data-source";
+import { AppDataSource } from "../../../data-source";
 import { User } from "../entity/User";
 import { Repository } from "typeorm";
 import { ResponseHandler } from "../helper/ResponseHandler";
@@ -37,31 +37,31 @@ export class UserController implements IEntityController {
 
   // Get all users
   public getAll = async (req: Request, res: Response): Promise<void> => {
-      let users;
-      const currentUser = req.signedInUser;
-      if (currentUser.role.id === 1) {
-        // Admin: see all users
-        users = await this.userRepository.find({
-          relations: ["manager", "role"],
-        });
-      } else if (currentUser.role.id === 2) {
-        // Manager: see only users they manage
-        users = await this.userRepository.find({
-          where: { manager: { id: currentUser.uid } },
-          relations: ["manager", "role"],
-        });
-      } else {
-        // Regular user: see only their own info
-        users = await this.userRepository.find({
-          where: { id: currentUser.uid },
-          relations: ["manager", "role"],
-        });
-      }
-      if (!users || users.length === 0) {
-        ResponseHandler.sendErrorResponse(res, StatusCodes.NO_CONTENT);
-        return;
-      }
-      ResponseHandler.sendSuccessResponse(res, users);
+    let users;
+    const currentUser = req.signedInUser;
+    if (currentUser.role.id === 1) {
+      // Admin: see all users
+      users = await this.userRepository.find({
+        relations: ["manager", "role"],
+      });
+    } else if (currentUser.role.id === 2) {
+      // Manager: see only users they manage
+      users = await this.userRepository.find({
+        where: { manager: { id: currentUser.uid } },
+        relations: ["manager", "role"],
+      });
+    } else {
+      // Regular user: see only their own info
+      users = await this.userRepository.find({
+        where: { id: currentUser.uid },
+        relations: ["manager", "role"],
+      });
+    }
+    if (!users || users.length === 0) {
+      ResponseHandler.sendErrorResponse(res, StatusCodes.NO_CONTENT);
+      return;
+    }
+    ResponseHandler.sendSuccessResponse(res, users);
   };
 
   public getByEmail = async (req: Request, res: Response): Promise<void> => {
