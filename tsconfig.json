@@ -18,6 +18,6 @@
       "@entity/*": ["src/api/entity/*"]
     }
   },
-  "include": ["src/**/*", "data-source.ts", "src/api/Server.ts"],
+  "include": ["src/**/*", "data-source.ts", "src/Server.ts"],
   "exclude": ["node_modules"]
 }

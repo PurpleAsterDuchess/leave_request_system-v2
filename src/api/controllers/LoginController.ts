@@ -54,9 +54,8 @@ export class LoginController implements ILoginController {
     }
 
     let token = new UserDTOToken(user.email, user.role, user.id);
-
     res
-      .status(StatusCodes.ACCEPTED)
+      .status(StatusCodes.CREATED)
       .send(jwt.sign({ token }, process.env.JWT_SECRET, { expiresIn: "3h" }));
   };
 }
