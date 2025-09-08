@@ -1,7 +1,5 @@
 @import "bootstrap/dist/css/bootstrap.min.css";
 
-/* You can add custom Bootstrap overrides or additional styles below */
-
 .navbar-brand {
   width: 10%;
 }
@@ -26,7 +24,8 @@
 }
 
 .comfy {
-  padding: 20px;
+  padding: 10px;
+  margin-right: 10px;
 }
 
 .square:before {
@@ -36,15 +35,22 @@
 }
 
 .square {
-  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  width: 90px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  font-size: clamp(1rem, 2vw, 2rem);
+  font-weight: bold;
+  color: #333;
+  text-align: center;
 }
 
-.leave-info {
-  background-color: #7dea7d;
-  padding: 10px;
-  border-radius: 5px;
-  margin-top: 10px;
-  display: flex;
+.leave-label {
+  font-size: clamp(1rem, 1vw, 1.5rem);
+  font-weight: 400;
 }
 
 .center-text {
@@ -54,16 +60,6 @@
   text-align: center;
 }
 
-.leave_box {
-  background-color: #7dea7d;
-  padding: 10px;
-  border-radius: 5px;
-  margin-top: 10px;
-  display: flex;
-  align-items: left;
-  width: 20%;
-  height: 20%;
-}
 .main-content {
   transition: margin-left 0.3s;
   margin-left: 0;

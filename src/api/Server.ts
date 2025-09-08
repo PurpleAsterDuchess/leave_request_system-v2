@@ -1,5 +1,6 @@
 import express from "express";
 import { DataSource } from "typeorm";
+import cors from "cors"
 
 import { Logger } from "./helper/Logger";
 import morgan, { StreamOptions } from "morgan";
@@ -7,7 +8,6 @@ import morgan, { StreamOptions } from "morgan";
 import { IRouter } from "./routes/IRouter";
 import { ErrorHandler } from "./helper/ErrorHandler";
 import { MiddlewareFactory } from "./helper/MiddlewareFactory";
-
 export class Server {
   private readonly app: express.Application;
 
@@ -24,6 +24,14 @@ export class Server {
     private readonly appDataSource: DataSource
   ) {
     this.app = express();
+
+    this.app.use(
+      cors({
+        origin: "http://localhost:5173", // frontend URL
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true,
+      })
+    );
 
     this.initialiseMiddlewares();
     this.initialiseRoutes();

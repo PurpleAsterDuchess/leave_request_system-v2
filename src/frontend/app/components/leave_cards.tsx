@@ -1,55 +1,110 @@
 import Card from "react-bootstrap/Card";
-import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
 import React, { useEffect, useState } from "react";
 
 export const LeaveCards = () => {
-  const [leaveData, setLeaveData] = useState(null);
+  const [leaveData, setLeaveData] = useState<null | {
+    initialAlTotal: number;
+    remainingAl: number;
+  }>(null);
 
   useEffect(() => {
-    // Replace with your actual API endpoint
-    fetch("/api/leave/staff")
-      .then((res) => res.json())
-      .then((data) => setLeaveData(data))
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      console.error("No token found. User might not be logged in.");
+      return;
+    }
+
+    fetch("http://localhost:8900/api/leave/staff", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch leave data");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data?.data?.length > 0) {
+          setLeaveData(data.data[0].user);
+        }
+      })
       .catch((err) => console.error(err));
   }, []);
 
+  if (!leaveData) {
+    return <p>Loading leave data...</p>;
+  }
+
+  const usedLeave = leaveData.initialAlTotal - leaveData.remainingAl;
+
+  const getRemainingColor = (remaining: number, total: number): string => {
+    const percent = (remaining / total) * 100;
+    if (percent > 60) return "#C4E17F";
+    if (percent > 30) return "#FFD580";
+    return "#FF9999"; // Red
+  };
+
+  const getUsedColor = (used: number, total: number): string => {
+    const percent = (used / total) * 100;
+    if (percent < 30) return "#C4E17F";
+    if (percent < 70) return "#FFD580";
+    return "#FF9999";
+  };
+
   return (
-    <>
-      <Row xs={1} md={3} className="g-4 comfy">
-        {Array.from({ length: 3 }).map((_, idx) => (
-          <div key={idx}>
-            <Card>
-              <div className="container">
-                <div className="row">
-                  <div
-                    className="square"
-                    style={{
-                      backgroundColor: "#9ED1DE",
-                      width: "40%",
-                      margin: "1rem",
-                    }}
-                  >
-                    <Card.Text className="center-text">
-                      This will contain the number of days taken from an
-                      endpoint (hopefully the colour as well)
-                    </Card.Text>
-                  </div>
-                  <div
-                    className="leave-info"
-                    style={{ margin: "1rem", width: "45%" }}
-                  >
-                    <Card.Text className="center-text">
-                      This will contain the leave data i.e. total leave,
-                      remaining leave, and used leave
-                    </Card.Text>
-                  </div>
-                </div>
-              </div>
-            </Card>
+    <Row xs={1} md={2} lg={3} className="g-4">
+      <Col>
+        <Card className="comfy h-100 d-flex flex-row align-items-center p-3">
+          <div
+            className="square leave-text me-3"
+            style={{
+              backgroundColor: getUsedColor(
+                usedLeave,
+                leaveData.initialAlTotal
+              ),
+            }}
+          >
+            {usedLeave}
           </div>
-        ))}
-      </Row>
-    </>
+          <Card.Text className="leave-label">Used Leave</Card.Text>
+        </Card>
+      </Col>
+
+      <Col>
+        <Card className="comfy h-100 d-flex flex-row align-items-center p-3">
+          <div
+            className="square leave-text me-3"
+            style={{
+              backgroundColor: getRemainingColor(
+                leaveData.remainingAl,
+                leaveData.initialAlTotal
+              ),
+            }}
+          >
+            {leaveData.remainingAl}
+          </div>
+          <Card.Text className="leave-label">Remaining Leave</Card.Text>
+        </Card>
+      </Col>
+
+      <Col>
+        <Card className="comfy h-100 d-flex flex-row align-items-center p-3">
+          <div
+            className="square leave-text me-3"
+            style={{ backgroundColor: "#9ED1DE" }}
+          >
+            {leaveData.initialAlTotal}
+          </div>
+          <Card.Text className="leave-label">Total Leave</Card.Text>
+        </Card>
+      </Col>
+    </Row>
   );
 };
