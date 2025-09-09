@@ -5,7 +5,7 @@ export const SideBar = () => {
     <div className="sidebar border-end">
       <ul className="sidebar-nav">
         <li className="nav-item">
-          <a className="nav-link left-align" href="#">
+          <a className="nav-link left-align" href="/">
             <img
               src="/dashboard.png"
               height="30"

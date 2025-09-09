@@ -59,7 +59,7 @@ export const LeaveCards = () => {
   };
 
   return (
-    <Row xs={1} md={2} lg={3} className="g-4">
+    <Row xs={1} md={2} lg={3} className="g-4 mb-4">
       <Col>
         <Card className="comfy h-100 d-flex flex-row align-items-center p-3">
           <div
