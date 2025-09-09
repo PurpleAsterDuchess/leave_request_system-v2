@@ -72,27 +72,50 @@
 }
 
 .sidebar {
-  width: 4rem;
+  width: 5rem;
   transition: width 0.3s ease;
-  overflow: hidden;
   background-color: #f8f9fa;
   border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .sidebar:hover {
   width: 15rem;
 }
+
 .sidebar .right-align {
   opacity: 0;
   transition: opacity 0.3s ease;
   white-space: nowrap;
+  margin-left: 0.5rem;
 }
+
 .sidebar:hover .right-align {
   opacity: 1;
 }
 
 .sidebar-nav {
   list-style: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    padding: 0.25rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+  .sidebar {
+    padding: 0.5rem;
+  }
+}
+
+@media (min-width: 1201px) {
+  .sidebar {
+    padding: 1rem; /* roomy */
+  }
 }
 
 .row {
