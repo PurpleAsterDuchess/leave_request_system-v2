@@ -16,9 +16,11 @@ export default function Home() {
   return (
     <>
       <NavBar />
-      <SideBar collapsed={collapsed} setCollapsed={setCollapsed} />
-      <div className={collapsed ? "main-content shifted" : "main-content"}>
-        <LeaveCards />
+      <div className="app-container">
+        <SideBar />
+        <main className="main-content">
+          <LeaveCards />
+        </main>
       </div>
     </>
   );
