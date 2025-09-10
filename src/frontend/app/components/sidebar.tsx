@@ -45,7 +45,7 @@ export const SideBar = () => {
               alt="Admin"
               className="d-inline-block align-top"
             />
-            <p className="right-align">Admin</p>
+            <p className="right-align">Manage Users</p>
           </a>
         </li>
       </ul>

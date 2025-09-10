@@ -2,6 +2,7 @@ import type { Route } from "./+types/home";
 import { NavBar } from "../components/navbar";
 import { SideBar } from "../components/sidebar";
 import { useState, useEffect } from "react";
+import { NewUserModal } from "~/modals/newUserModal";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -13,8 +14,9 @@ export function meta({}: Route.MetaArgs) {
 type Users = {
   id: number;
   firstname: string;
-  lastname: string;
+  surname: string;
   email: string;
+  password: string;
   role: {
     id: number;
     name: string;
@@ -74,6 +76,52 @@ export default function MyLeave() {
     setEditValue(value);
   };
 
+  const handleNewUser = (user: {
+    email: string;
+    firstname: string;
+    surname: string;
+    roleId: number;
+    password: string;
+  }) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch("http://localhost:8900/api/users", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(user),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to create user");
+        return res.json();
+      })
+      .then(() => fetchUsers())
+      .catch((err) => console.error(err));
+  };
+
+  const deleteUser = (user: { id: number }) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch(`http://localhost:8900/api/users/${user.id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(user),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to delete user");
+        return res.json();
+      })
+      .then(() => fetchUsers())
+      .catch((err) => console.error(err));
+  };
+
   const saveEdit = (user: Users) => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -87,14 +135,12 @@ export default function MyLeave() {
         return;
       }
       body.roleId = selectedRole.id;
-      body.roleName = selectedRole.name; 
+      body.roleName = selectedRole.name;
     } else if (editing?.field === "initialAlTotal") {
       body.initialAlTotal = Number(editValue);
     } else {
       body[editing?.field!] = editValue;
     }
-
-    console.log(body)
 
     fetch(`http://localhost:8900/api/users`, {
       method: "PATCH",
@@ -152,6 +198,11 @@ export default function MyLeave() {
           >
             Create user
           </button>
+          <NewUserModal
+            show={showModal}
+            onClose={() => setShowModal(false)}
+            onSubmit={handleNewUser}
+          />
           <table className="table">
             <thead>
               <tr>
@@ -171,7 +222,7 @@ export default function MyLeave() {
                   <tr key={user.id}>
                     <th scope="row">{idx + 1}</th>
                     <td data-toggle="tooltip" title={`${user.email}`}>
-                      {user.firstname} {user.lastname}
+                      {user.firstname} {user.surname}
                     </td>
                     <td
                       onClick={() =>
@@ -242,6 +293,14 @@ export default function MyLeave() {
                         onClick={() => resetLeave(user)}
                       >
                         Reset leave
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-danger"
+                        onClick={() => deleteUser(user)}
+                      >
+                        Delete User
                       </button>
                     </td>
                   </tr>
