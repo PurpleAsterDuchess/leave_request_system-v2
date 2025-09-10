@@ -119,7 +119,8 @@ export class LeaveController implements IEntityController {
         const newRemainingAl = leave.user.remainingAl + daysDifference;
         leave.user.remainingAl = newRemainingAl;
       }
-
+      await this.leaveRepository.save(leave);
+      await this.userRepository.save(leave.user);
       ResponseHandler.sendSuccessResponse(res, leave, StatusCodes.ACCEPTED);
     } else {
       ResponseHandler.sendErrorResponse(

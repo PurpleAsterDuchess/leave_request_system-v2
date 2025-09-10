@@ -36,7 +36,7 @@ export class LeaveRequest {
   })
   @IsIn(["pending", "approved", "rejected", "canceled"], {
     message: "Invalid status",
-  })  
+  })
   status: "pending" | "approved" | "rejected" | "canceled";
 
   @CreateDateColumn()

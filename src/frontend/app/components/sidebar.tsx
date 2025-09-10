@@ -27,7 +27,7 @@ export const SideBar = () => {
           </a>
         </li>
         <li className="nav-item">
-          <a className="nav-link left-align" href="#">
+          <a className="nav-link left-align" href="/manager">
             <img
               src="/group.png"
               height="30"

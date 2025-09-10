@@ -127,20 +127,28 @@ export class StaffLeaveController implements IEntityController {
       }
 
       // Set status to canceled and update user's AL
-      leaveRequest.status = "canceled";
-      const user = await this.userRepository.findOneByOrFail({
-        id: leaveRequest.user.id,
-      });
-      const daysDifference = this.calculateDays(
-        leaveRequest.startDate,
-        leaveRequest.endDate
-      );
-      user.remainingAl += daysDifference;
-      await this.userRepository.save(user);
-      leaveRequest.updatedAt = new Date();
-      await this.staffLeaveRepository.save(leaveRequest);
-      ResponseHandler.sendSuccessResponse(res, leaveRequest, StatusCodes.OK);
-      return;
+      if (leaveRequest.status !== "rejected") {
+        leaveRequest.status = "canceled";
+        const user = await this.userRepository.findOneByOrFail({
+          id: leaveRequest.user.id,
+        });
+        const daysDifference = this.calculateDays(
+          leaveRequest.startDate,
+          leaveRequest.endDate
+        );
+        user.remainingAl += daysDifference;
+        await this.userRepository.save(user);
+        leaveRequest.updatedAt = new Date();
+        await this.staffLeaveRepository.save(leaveRequest);
+        ResponseHandler.sendSuccessResponse(res, leaveRequest, StatusCodes.OK);
+        return;
+      } else {
+        ResponseHandler.sendErrorResponse(
+          res,
+          StatusCodes.BAD_REQUEST,
+          "Leave request cannot be canceled."
+        );
+      }
     } else {
       ResponseHandler.sendErrorResponse(
         res,
@@ -179,7 +187,7 @@ export class StaffLeaveController implements IEntityController {
 
       leaveRequest.updatedAt = new Date();
       await this.staffLeaveRepository.save(leaveRequest);
-      
+
       ResponseHandler.sendSuccessResponse(res, leaveRequest, StatusCodes.OK);
     }
   };

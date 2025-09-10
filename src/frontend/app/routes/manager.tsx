@@ -7,13 +7,18 @@ import { LeaveRequestModal } from "../modals/leaveReqModal";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "My leave" },
+    { title: "Team leave" },
     { name: "description", content: "Welcome to React Router!" },
   ];
 }
 
 type Leave = {
   leaveId: number;
+  user: {
+    firstname: string;
+    surname: string;
+    email: string;
+  };
   startDate: string;
   endDate: string;
   status: string;
@@ -21,7 +26,7 @@ type Leave = {
   updatedAt: string;
 };
 
-export default function MyLeave() {
+export default function Manager() {
   const [leaveData, setLeaveData] = useState<Leave[]>([]);
   const [showModal, setShowModal] = useState(false);
 
@@ -30,7 +35,7 @@ export default function MyLeave() {
     if (!token)
       return console.error("No token found. User might not be logged in.");
 
-    fetch("http://localhost:8900/api/leave/staff", {
+    fetch("http://localhost:8900/api/leave", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -59,7 +64,7 @@ export default function MyLeave() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("http://localhost:8900/api/leave/staff", {
+    fetch("http://localhost:8900/api/leave", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -75,20 +80,20 @@ export default function MyLeave() {
       .catch((err) => console.error(err));
   };
 
-  const cancelStaffLeave = (leave: Leave) => {
+  const updateStatus = (leave: Leave, status: "approved" | "rejected") => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("http://localhost:8900/api/leave/staff", {
+    fetch("http://localhost:8900/api/leave", {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ id: leave.leaveId, status: "canceled" }),
+      body: JSON.stringify({ id: leave.leaveId, status: status }),
     })
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to cancel leave request");
+        if (!res.ok) throw new Error("Failed to change leave request status");
         return res.json();
       })
       .then(() => fetchLeaves())
@@ -101,13 +106,11 @@ export default function MyLeave() {
       <div className="app-container">
         <SideBar />
         <main className="main-content">
-          <LeaveCards />
-
           <button
             className="btn btn-primary mb-4"
             onClick={() => setShowModal(true)}
           >
-            Request Leave
+            Create Leave
           </button>
 
           <LeaveRequestModal
@@ -120,6 +123,7 @@ export default function MyLeave() {
             <thead>
               <tr>
                 <th scope="col">#</th>
+                <th scope="col">User</th>
                 <th scope="col">Start</th>
                 <th scope="col">End</th>
                 <th scope="col">Status</th>
@@ -129,22 +133,36 @@ export default function MyLeave() {
             </thead>
             <tbody>
               {leaveData
-                .filter((leave) => leave.leaveId !== undefined && leave.leaveId !== null)
+                .filter(
+                  (leave) =>
+                    leave.leaveId !== undefined && leave.leaveId !== null
+                )
                 .map((leave, idx) => (
                   <tr key={leave.leaveId}>
                     <th scope="row">{idx + 1}</th>
+                    <td data-toggle="tooltip" title={`${leave.user.email}`}>
+                      {leave.user.firstname} {leave.user.surname}
+                    </td>
                     <td>{leave.startDate}</td>
                     <td>{leave.endDate}</td>
                     <td>{leave.status}</td>
                     <td>{leave.updatedAt}</td>
                     <td>
-                      {leave.status !== "canceled" && (
-                        <button
-                          className="btn btn-danger"
-                          onClick={() => cancelStaffLeave(leave)}
-                        >
-                          Cancel
-                        </button>
+                      {leave.status == "pending" && (
+                        <>
+                          <button
+                            className="btn btn-outline-success"
+                            onClick={() => updateStatus(leave, "approved")}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            className="btn btn-danger"
+                            onClick={() => updateStatus(leave, "rejected")}
+                          >
+                            Reject
+                          </button>
+                        </>
                       )}
                     </td>
                   </tr>
