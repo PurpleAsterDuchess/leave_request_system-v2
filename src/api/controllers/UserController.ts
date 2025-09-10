@@ -237,6 +237,11 @@ export class UserController implements IEntityController {
       user.surname = req.body.surname;
     }
 
+    if (req.body.initialAlTotal !== undefined) {
+      user.initialAlTotal = req.body.initialAlTotal;
+    }
+
+
     const errors = await validate(user);
     if (errors.length > 0) {
       //Collate a string of all decorator error messages

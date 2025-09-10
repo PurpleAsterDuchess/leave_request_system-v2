@@ -5,7 +5,7 @@ export const SideBar = () => {
     <div className="sidebar border-end">
       <ul className="sidebar-nav">
         <li className="nav-item">
-          <a className="nav-link left-align" href="/">
+          <a className="nav-link left-align" href="/home">
             <img
               src="/dashboard.png"
               height="30"
@@ -35,6 +35,17 @@ export const SideBar = () => {
               className="d-inline-block align-top"
             />
             <p className="right-align">Team Leave</p>
+          </a>
+        </li>
+        <li className="nav-item">
+          <a className="nav-link left-align" href="/admin">
+            <img
+              src="/settings.png"
+              height="30"
+              alt="Admin"
+              className="d-inline-block align-top"
+            />
+            <p className="right-align">Admin</p>
           </a>
         </li>
       </ul>

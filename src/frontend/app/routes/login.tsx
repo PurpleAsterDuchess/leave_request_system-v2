@@ -30,10 +30,9 @@ export default function LoginPage() {
       // Save token if returned
       if (data.token) {
         localStorage.setItem("token", data.token);
-        navigate("/");
+        navigate("/home");
       }
 
-      alert("Login successful!");
     } catch (err) {
       setError(err.message);
     } finally {
