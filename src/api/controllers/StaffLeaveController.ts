@@ -4,7 +4,6 @@ import { User } from "../entity/User";
 import { Repository } from "typeorm";
 import { ResponseHandler } from "../helper/ResponseHandler";
 import { StatusCodes } from "http-status-codes";
-import { instanceToPlain } from "class-transformer";
 import { LeaveRequest } from "../entity/LeaveRequest";
 import { IEntityController } from "./IEntityControllers";
 
@@ -35,7 +34,7 @@ export class StaffLeaveController implements IEntityController {
     this.userRepository = AppDataSource.getRepository(User);
   }
 
-  public dateDiff = (res, start, end) => {
+  public dateDiff = (res, start, end): number | null => {
     end = new Date(end);
     start = new Date(start);
     const daysDifference =
@@ -48,6 +47,7 @@ export class StaffLeaveController implements IEntityController {
         StatusCodes.BAD_REQUEST,
         StaffLeaveController.ERROR_INVALID_DATE
       );
+      return null;
     }
   };
 
@@ -94,8 +94,9 @@ export class StaffLeaveController implements IEntityController {
     const { id, startDate, endDate, status } = req.body;
 
     // Fetch the existing leave request from the database
-    const leaveRequest = await this.staffLeaveRepository.findOneByOrFail({
-      leaveId: id,
+    const leaveRequest = await this.staffLeaveRepository.findOne({
+      where: { leaveId: id },
+      relations: ["user"],
     });
 
     if (!leaveRequest) {
@@ -178,7 +179,7 @@ export class StaffLeaveController implements IEntityController {
 
       leaveRequest.updatedAt = new Date();
       await this.staffLeaveRepository.save(leaveRequest);
-
+      
       ResponseHandler.sendSuccessResponse(res, leaveRequest, StatusCodes.OK);
     }
   };

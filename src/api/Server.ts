@@ -28,7 +28,7 @@ export class Server {
     this.app.use(
       cors({
         origin: "http://localhost:5173", // frontend URL
-        methods: ["GET", "POST", "PUT", "DELETE"],
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
         credentials: true,
       })
     );

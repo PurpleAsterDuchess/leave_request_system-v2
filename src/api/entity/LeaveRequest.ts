@@ -31,7 +31,7 @@ export class LeaveRequest {
 
   @Column({
     type: "enum",
-    enum: ["pending", "approved", "rejected"],
+    enum: ["pending", "approved", "rejected", "canceled"],
     default: "pending",
   })
   @IsIn(["pending", "approved", "rejected", "canceled"], {
