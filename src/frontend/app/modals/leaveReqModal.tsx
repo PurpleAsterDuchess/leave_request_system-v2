@@ -15,6 +15,7 @@ type LeaveRequestModalProps = {
     endDate: string;
     reason?: string;
   };
+  error?: string;
 };
 
 export const LeaveRequestModal = ({
@@ -22,10 +23,12 @@ export const LeaveRequestModal = ({
   onClose,
   onSubmit,
   editingLeave,
+  error: backendError,
 }: LeaveRequestModalProps) => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
 
   // Populate fields when editingLeave changes
   React.useEffect(() => {
@@ -42,11 +45,11 @@ export const LeaveRequestModal = ({
 
   const handleSubmit = () => {
     if (!startDate || !endDate) {
-      alert("Please fill in all required fields.");
+      setError("Please fill in all required fields.");
       return;
     }
+    setError("");
     onSubmit({ id: editingLeave?.id, startDate, endDate, reason });
-    onClose();
   };
 
   return (
@@ -89,6 +92,13 @@ export const LeaveRequestModal = ({
             />
           </Form.Group>
         </Form>
+        {(error || backendError) && (
+          <div
+            style={{ color: "red", marginBottom: "1rem", textAlign: "right" }}
+          >
+            {error || backendError}
+          </div>
+        )}
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>

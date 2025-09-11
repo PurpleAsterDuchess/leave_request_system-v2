@@ -34,6 +34,7 @@ export default function MyLeave() {
   } | null>(null);
   const [editValue, setEditValue] = useState<string | number>("");
   const [roles, setRoles] = useState<{ id: number; name: string }[]>([]);
+  const [modalError, setModalError] = useState("");
 
   const fetchUsers = () => {
     const token = localStorage.getItem("token");
@@ -76,7 +77,7 @@ export default function MyLeave() {
     setEditValue(value);
   };
 
-  const handleNewUser = (user: {
+  const handleNewUser = async (user: {
     email: string;
     firstname: string;
     surname: string;
@@ -86,20 +87,36 @@ export default function MyLeave() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("http://localhost:8900/api/users", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(user),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to create user");
-        return res.json();
-      })
-      .then(() => fetchUsers())
-      .catch((err) => console.error(err));
+    setModalError("");
+
+    try {
+      const res = await fetch("http://localhost:8900/api/users", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(user),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const errorMessage =
+          typeof data?.error === "string"
+            ? data.error
+            : typeof data?.message === "string"
+              ? data.message
+              : "Failed to create user. Please check your input.";
+        setModalError(errorMessage);
+        return;
+      }
+
+      await res.json();
+      fetchUsers();
+      setShowModal(false);
+    } catch (err) {
+      setModalError("Network error. Please try again.");
+    }
   };
 
   const deleteUser = (user: { id: number }) => {
@@ -202,6 +219,7 @@ export default function MyLeave() {
             show={showModal}
             onClose={() => setShowModal(false)}
             onSubmit={handleNewUser}
+            error={modalError}
           />
           <table className="table">
             <thead>

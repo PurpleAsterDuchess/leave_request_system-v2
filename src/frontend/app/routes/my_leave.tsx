@@ -24,6 +24,7 @@ type Leave = {
 export default function MyLeave() {
   const [leaveData, setLeaveData] = useState<Leave[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [modalError, setModalError] = useState("");
 
   const fetchLeaves = () => {
     const token = localStorage.getItem("token");
@@ -51,7 +52,7 @@ export default function MyLeave() {
     fetchLeaves();
   }, []);
 
-  const handleNewLeave = (leave: {
+  const handleNewLeave = async (leave: {
     startDate: string;
     endDate: string;
     reason: string;
@@ -59,20 +60,35 @@ export default function MyLeave() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("http://localhost:8900/api/leave/staff", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(leave),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to create leave request");
-        return res.json();
-      })
-      .then(() => fetchLeaves())
-      .catch((err) => console.error(err));
+    setModalError("");
+
+    try {
+      const res = await fetch("http://localhost:8900/api/leave/staff", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(leave),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const errorMessage =
+          typeof data?.error === "string"
+            ? data.error
+            : typeof data?.message === "string"
+              ? data.message
+              : "Failed to create user. Please check your input.";
+        setModalError(errorMessage);
+        return;
+      }
+
+      await res.json();
+      fetchLeaves();
+      setShowModal(false);
+    } catch (err) {
+      setModalError("Network error. Please try again.");
+    }
   };
 
   const cancelStaffLeave = (leave: Leave) => {
@@ -114,6 +130,7 @@ export default function MyLeave() {
             show={showModal}
             onClose={() => setShowModal(false)}
             onSubmit={handleNewLeave}
+            error={modalError}
           />
 
           <table className="table">

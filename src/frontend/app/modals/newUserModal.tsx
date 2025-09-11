@@ -11,26 +11,29 @@ type NewUserModalProps = {
     roleId: number;
     password: string;
   }) => void;
+  error?: string;
 };
 
 export const NewUserModal = ({
   show,
   onClose,
   onSubmit,
+  error: backendError,
 }: NewUserModalProps) => {
   const [email, setEmail] = useState("");
   const [firstname, setFirstname] = useState("");
   const [surname, setSurname] = useState("");
   const [roleId, setRoleId] = useState<number | "">("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = () => {
     if (!email || !firstname || !surname || !roleId || !password) {
-      alert("Please fill in all required fields.");
+      setError("Please fill in all required fields.");
       return;
     }
+    setError("");
     onSubmit({ email, firstname, surname, roleId, password });
-    onClose();
   };
 
   return (
@@ -90,6 +93,13 @@ export const NewUserModal = ({
             />
           </Form.Group>
         </Form>
+        {(error || backendError) && (
+          <div
+            style={{ color: "red", marginBottom: "1rem", textAlign: "right" }}
+          >
+            {error || backendError}
+          </div>
+        )}
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>
