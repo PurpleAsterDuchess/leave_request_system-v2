@@ -9,6 +9,7 @@ type NewUserModalProps = {
     firstname: string;
     surname: string;
     roleId: number;
+    managerId?: number | null;
     password: string;
   }) => void;
   error?: string;
@@ -24,6 +25,7 @@ export const NewUserModal = ({
   const [firstname, setFirstname] = useState("");
   const [surname, setSurname] = useState("");
   const [roleId, setRoleId] = useState<number | "">("");
+  const [managerId, setManagerId] = useState<number | "">("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -33,7 +35,7 @@ export const NewUserModal = ({
       return;
     }
     setError("");
-    onSubmit({ email, firstname, surname, roleId, password });
+    onSubmit({ email, firstname, surname, roleId, managerId: managerId || null, password });
   };
 
   return (
@@ -80,6 +82,15 @@ export const NewUserModal = ({
               value={roleId}
               onChange={(e) => setRoleId(Number(e.target.value))}
               required={true}
+            />
+          </Form.Group>
+          <Form.Group className="mb-3" controlId="userLineManager">
+            <Form.Label>Manager</Form.Label>
+            <Form.Control
+              type="text"
+              value={managerId}
+              onChange={(e) => setManagerId(Number(e.target.value))}
+              placeholder="Optional"
             />
           </Form.Group>
 

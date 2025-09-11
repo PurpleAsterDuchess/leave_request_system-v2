@@ -21,6 +21,12 @@ type Users = {
     id: number;
     name: string;
   };
+  manager?: {
+    id: number;
+    firstname: string;
+    surname: string;
+    role: { id: number };
+  };
   initialAlTotal: number;
   remainingAl: number;
 };
@@ -34,6 +40,9 @@ export default function MyLeave() {
   } | null>(null);
   const [editValue, setEditValue] = useState<string | number>("");
   const [roles, setRoles] = useState<{ id: number; name: string }[]>([]);
+  const [managers, setManagers] = useState<
+    { id: number; firstname: string; surname: string; role: { id: number } }[]
+  >([]);
   const [modalError, setModalError] = useState("");
 
   const fetchUsers = () => {
@@ -54,6 +63,28 @@ export default function MyLeave() {
       })
       .then((data) => {
         setUserData(data?.data || []);
+      })
+      .catch((err) => console.error(err));
+  };
+
+  const fetchManagers = () => {
+    const token = localStorage.getItem("token");
+    if (!token)
+      return console.error("No token found. User might not be logged in.");
+
+    fetch("http://localhost:8900/api/users", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch managers");
+        return res.json();
+      })
+      .then((data) => {
+        setManagers(data?.data || []);
       })
       .catch((err) => console.error(err));
   };
@@ -82,6 +113,7 @@ export default function MyLeave() {
     firstname: string;
     surname: string;
     roleId: number;
+    managerId?: number | null;
     password: string;
   }) => {
     const token = localStorage.getItem("token");
@@ -155,6 +187,15 @@ export default function MyLeave() {
       body.roleName = selectedRole.name;
     } else if (editing?.field === "initialAlTotal") {
       body.initialAlTotal = Number(editValue);
+    } else if (editing?.field === "manager") {
+      const selectedManager = managers.find((m) => m.id === Number(editValue));
+      if (!selectedManager) {
+        console.error("Invalid manager selected");
+        return;
+      }
+      body.managerId = selectedManager.id || null;
+      body.managerName = selectedManager.firstname;
+      body.managerSurname = selectedManager.surname;
     } else {
       body[editing?.field!] = editValue;
     }
@@ -200,6 +241,7 @@ export default function MyLeave() {
 
   useEffect(() => {
     fetchUsers();
+    fetchManagers();
     fetchRoles();
   }, []);
 
@@ -227,6 +269,7 @@ export default function MyLeave() {
                 <th scope="col">#</th>
                 <th scope="col">User</th>
                 <th scope="col">Role</th>
+                <th scope="col">Manager</th>
                 <th scope="col">Initial AL</th>
                 <th scope="col">Taken AL</th>
                 <th scope="col">Remaining AL</th>
@@ -273,6 +316,47 @@ export default function MyLeave() {
                         </select>
                       ) : (
                         user.role.name
+                      )}
+                    </td>
+                    <td
+                      onClick={() =>
+                        startEditing(user.id, "manager", user.manager?.id || "")
+                      }
+                      style={{ cursor: "pointer" }}
+                    >
+                      {editing?.id === user.id &&
+                      editing.field === "manager" ? (
+                        <select
+                          value={editValue}
+                          onChange={(e) => setEditValue(Number(e.target.value))}
+                          onBlur={() => saveEdit(user)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveEdit(user);
+                            if (e.key === "Escape") setEditing(null);
+                          }}
+                          autoFocus
+                          style={{ width: "80px" }}
+                        >
+                          <option value={user.manager?.id} disabled>
+                            {user.manager?.firstname} {user.manager?.surname}{" "}
+                            (current)
+                          </option>
+                          {managers
+                            .filter(
+                              (manager) =>
+                                manager.id !== user.manager?.id &&
+                                manager.role.id === 2 && manager.id !== user.id
+                            )
+                            .map((manager) => (
+                              <option key={manager.id} value={manager.id}>
+                                {manager.firstname} {manager.surname}
+                              </option>
+                            ))}
+                        </select>
+                      ) : (
+                        <>
+                          {user.manager?.firstname} {user.manager?.surname}
+                        </>
                       )}
                     </td>
                     <td

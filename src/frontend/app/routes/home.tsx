@@ -2,6 +2,7 @@ import type { Route } from "./+types/home";
 import { NavBar } from "../components/navbar";
 import { SideBar } from "../components/sidebar";
 import { LeaveCards } from "../components/leave_cards";
+import PendingRequestsCard from "~/components/pendingRequestsCard";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -18,6 +19,9 @@ export default function Home() {
         <SideBar />
         <main className="main-content">
           <LeaveCards />
+          <div style={{ width: "60%" }}>
+            <PendingRequestsCard />
+          </div>
         </main>
       </div>
     </>
