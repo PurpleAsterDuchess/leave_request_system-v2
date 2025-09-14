@@ -1,20 +1,27 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Row, Col } from "react-bootstrap";
 import Card from "react-bootstrap/Card";
-import Col from "react-bootstrap/Col";
-import Row from "react-bootstrap/Row";
+
+type quickLeaveProps = {
+  leaveId: number;
+  firstname: string;
+  surname: string;
+  email: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  initialAlTotal: number;
+  remainingAl: number;
+};
 
 function PendingRequestsCard() {
-  const [leaveData, setLeaveData] = useState<null | {
-    initialAlTotal: number;
-    remainingAl: number;
-  }>(null);
+  const [leaveData, setLeaveData] = useState<quickLeaveProps[]>([]);
 
-  useEffect(() => {
+  const fetchPendingLeaves = () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      console.error("No token found. User might not be logged in.");
-      return;
+      return console.error("No token found. User might not be logged in.");
     }
 
     fetch("http://localhost:8900/api/leave/", {
@@ -32,76 +39,110 @@ function PendingRequestsCard() {
       })
       .then((data) => {
         if (data?.data?.length > 0) {
-          setLeaveData(data.data[0].user);
+          setLeaveData(
+            data.data.map((leave: any) => ({
+              leaveId: leave.id,
+              firstname: leave.user.firstname,
+              surname: leave.user.surname,
+              email: leave.user.email,
+              status: leave.status,
+              startDate: leave.startDate,
+              endDate: leave.endDate,
+              initialAlTotal: leave.user.initialAlTotal,
+              remainingAl: leave.user.remainingAl,
+            }))
+          );
         }
       })
       .catch((err) => console.error(err));
+  };
+
+  const updateStatus = (
+    leave: quickLeaveProps,
+    status: "approved" | "rejected"
+  ) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch("http://localhost:8900/api/leave", {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: leave.leaveId, status: status }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to change leave request status");
+        return res.json();
+      })
+      .then(() => fetchPendingLeaves())
+      .catch((err) => console.error(err));
+  };
+
+  useEffect(() => {
+    fetchPendingLeaves();
   }, []);
 
   if (!leaveData) {
     return <p>Loading leave data...</p>;
   }
-  console.log("Here")
-  console.log(leaveData)
-
-  const usedLeave = leaveData.initialAlTotal - leaveData.remainingAl;
-
-  const getRemainingColor = (remaining: number, total: number): string => {
-    const percent = (remaining / total) * 100;
-    if (percent > 60) return "#C4E17F";
-    if (percent > 30) return "#FFD580";
-    return "#FF9999"; // Red
-  };
-
-  const getUsedColor = (used: number, total: number): string => {
-    const percent = (used / total) * 100;
-    if (percent < 30) return "#C4E17F";
-    if (percent < 70) return "#FFD580";
-    return "#FF9999";
-  };
 
   return (
-        <>
-        <Card className="comfy h-100 d-flex flex-row align-items-center p-3">
-          <div
-            className="square leave-text me-3"
-            style={{
-              backgroundColor: getUsedColor(
-                usedLeave,
-                leaveData.initialAlTotal
-              ),
-            }}
-          >
-            {usedLeave}
-          </div>
-          <Card.Text className="leave-label">Used Leave</Card.Text>
-        </Card>
-
-        <Card className="comfy h-100 d-flex flex-row align-items-center p-3">
-          <div
-            className="square leave-text me-3"
-            style={{
-              backgroundColor: getRemainingColor(
-                leaveData.remainingAl,
-                leaveData.initialAlTotal
-              ),
-            }}
-          >
-            {leaveData.remainingAl}
-          </div>
-          <Card.Text className="leave-label">Remaining Leave</Card.Text>
-        </Card>
-
-        <Card className="comfy h-100 d-flex flex-row align-items-center p-3">
-          <div
-            className="square leave-text me-3"
-            style={{ backgroundColor: "#9ED1DE" }}
-          >
-            {leaveData.initialAlTotal}
-          </div>
-          <Card.Text className="leave-label">Total Leave</Card.Text>
-        </Card>
-</>  );
+    <>
+      <>
+        <Row className="mb-3">
+          <h5 className="mb-3">Pending Requests</h5>
+          {leaveData
+            .filter((leave) => leave.status === "pending")
+            .map((leave, idx) => {
+              return (
+                <Card
+                  key={idx}
+                  className="comfy h-100 d-flex flex-row align-items-center p-3"
+                >
+                  <Col className="me-3">
+                    {leave.firstname} {leave.surname}
+                  </Col>
+                  <Col className="me-3">
+                    {leave.startDate} - {leave.endDate}
+                  </Col>
+                  <Col className="me-3">
+                    Initial Leave: {leave.initialAlTotal}
+                  </Col>
+                  <Col className="me-3">Remaining: {leave.remainingAl}</Col>
+                  <Col className="me-3 right-align">
+                    <button
+                      className="btn btn-success"
+                      style={{ marginRight: "5px" }}
+                      onClick={() => updateStatus(leave, "approved")}
+                    >
+                      <img
+                        src="/check.png"
+                        alt="Approve"
+                        width="16"
+                        height="16"
+                      />
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => updateStatus(leave, "rejected")}
+                    >
+                      <img
+                        src="/close.png"
+                        alt="Reject"
+                        width="16"
+                        height="16"
+                      />
+                    </button>
+                  </Col>
+                </Card>
+              );
+            })}
+        </Row>
+      </>
+    </>
+  );
 }
 
 export default PendingRequestsCard;
