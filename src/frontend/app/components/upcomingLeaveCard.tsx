@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense, useMemo } from "react";
 import Card from "react-bootstrap/Card";
 const Calendar = React.lazy(() => import("react-calendar"));
 import "react-calendar/dist/Calendar.css";
@@ -7,19 +7,26 @@ type LeaveItem = {
   leaveId: number;
   startDate: string;
   endDate: string;
-  status: string;
+  status: "requested" | "approved" | "rejected";
+};
+
+type LeaveDay = {
+  date: Date;
+  status: LeaveItem["status"];
 };
 
 function LeaveCalendarCard() {
   const [leaveData, setLeaveData] = useState<LeaveItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchLeaves = () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      return console.error("No token found. User might not be logged in.");
+      setError("No token found. Please log in.");
+      return;
     }
 
-    fetch("http://localhost:8900/api/leave/", {
+    fetch(`http://localhost:8900/api/leave/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -31,33 +38,61 @@ function LeaveCalendarCard() {
         return res.json();
       })
       .then((data) => {
-        if (data?.data?.length > 0) {
-          setLeaveData(
-            data.data.map((leave: any) => ({
-              leaveId: leave.id,
-              startDate: leave.startDate,
-              endDate: leave.endDate,
-              status: leave.status,
-            }))
-          );
+        if (Array.isArray(data?.data)) {
+          const parsed = data.data.map((leave: any) => ({
+            leaveId: leave.id,
+            startDate: leave.startDate,
+            endDate: leave.endDate,
+            status: leave.status,
+          }));
+          setLeaveData(parsed);
+        } else {
+          setLeaveData([]);
         }
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+        setError("Unable to load leave data.");
+      });
   };
 
   useEffect(() => {
     fetchLeaves();
   }, []);
 
-  const leaveDates = leaveData.flatMap((leave) => {
-    const start = new Date(leave.startDate);
-    const end = new Date(leave.endDate);
-    const days: { date: Date; status: string }[] = [];
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      days.push({ date: new Date(d), status: leave.status });
-    }
-    return days;
-  });
+  const leaveDates: LeaveDay[] = useMemo(() => {
+    const statusPriority = { approved: 3, requested: 2, rejected: 1 };
+
+    const allDays: LeaveDay[] = [];
+
+    leaveData.forEach((leave) => {
+      const start = new Date(leave.startDate);
+      const end = new Date(leave.endDate);
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        allDays.push({
+          date: new Date(d.getTime()),
+          status: leave.status,
+        });
+      }
+    });
+
+    const grouped = new Map<string, LeaveDay>();
+    allDays.forEach((day) => {
+      const key = day.date.toDateString();
+      const existing = grouped.get(key);
+      if (
+        !existing ||
+        statusPriority[day.status] > statusPriority[existing.status]
+      ) {
+        grouped.set(key, day);
+      }
+    });
+
+    return Array.from(grouped.values());
+  }, [leaveData]);
+
+  if (error) return <p>{error}</p>;
+  if (leaveData.length === 0) return <p>Loading leave data...</p>;
 
   return (
     <Card
@@ -70,22 +105,20 @@ function LeaveCalendarCard() {
       }}
     >
       <h5 style={{ marginBottom: "1rem", fontWeight: "600" }}>My Leave</h5>
-      <Suspense fallback={<div>Loading...</div>}>
-      <Calendar
-        tileClassName={({ date }) => {
-          const leaveDay = leaveDates.find(
+      <Suspense fallback={<div>Loading calendar...</div>}>
+        <Calendar
+          tileClassName={({ date }) => {
+            const leaveDay = leaveDates.find(
             (leaveDate) => leaveDate.date.toDateString() === date.toDateString()
-          );
+            );
 
-          if (!leaveDay) return "";
-
-          if (leaveDay.status === "requested") return "leave-requested";
-          if (leaveDay.status === "approved") return "leave-approved";
-          if (leaveDay.status === "rejected") return "leave-rejected";
-
-          return "";
-        }}
-      />
+            if (!leaveDay) return "";
+            if (leaveDay.status === "requested") return "leave-requested";
+            if (leaveDay.status === "approved") return "leave-approved";
+            if (leaveDay.status === "rejected") return "leave-rejected";
+            return "";
+          }}
+        />
       </Suspense>
     </Card>
   );
