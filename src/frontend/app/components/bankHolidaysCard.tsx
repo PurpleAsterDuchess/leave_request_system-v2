@@ -18,7 +18,6 @@ function BankHolidaysCard() {
 
       const data = await res.json();
 
-      // pick region: e.g. England and Wales
       const region = data["england-and-wales"];
       if (!region || !region.events) {
         throw new Error("No holidays found for region");

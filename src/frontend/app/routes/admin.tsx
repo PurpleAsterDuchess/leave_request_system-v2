@@ -4,6 +4,9 @@ import { SideBar } from "../components/sidebar";
 import { useState, useEffect } from "react";
 import { NewUserModal } from "~/modals/newUserModal";
 
+const API_ENDPOINT =
+  import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
+
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "My leave" },
@@ -50,7 +53,7 @@ export default function MyLeave() {
     if (!token)
       return console.error("No token found. User might not be logged in.");
 
-    fetch("http://localhost:8900/api/users", {
+    fetch(`${API_ENDPOINT}/users`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -72,7 +75,7 @@ export default function MyLeave() {
     if (!token)
       return console.error("No token found. User might not be logged in.");
 
-    fetch("http://localhost:8900/api/users", {
+    fetch(`${API_ENDPOINT}/users`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -92,7 +95,7 @@ export default function MyLeave() {
   const fetchRoles = () => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    fetch("http://localhost:8900/api/roles", {
+    fetch(`${API_ENDPOINT}/roles`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -122,7 +125,7 @@ export default function MyLeave() {
     setModalError("");
 
     try {
-      const res = await fetch("http://localhost:8900/api/users", {
+      const res = await fetch(`${API_ENDPOINT}/users`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -155,7 +158,7 @@ export default function MyLeave() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch(`http://localhost:8900/api/users/${user.id}`, {
+    fetch(`${API_ENDPOINT}/users/${user.id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -200,7 +203,7 @@ export default function MyLeave() {
       body[editing?.field!] = editValue;
     }
 
-    fetch(`http://localhost:8900/api/users`, {
+    fetch(`${API_ENDPOINT}/users`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -223,7 +226,7 @@ export default function MyLeave() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch(`http://localhost:8900/api/users/${user.id}/reset-Al`, {
+    fetch(`${API_ENDPOINT}/users/${user.id}/reset-Al`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

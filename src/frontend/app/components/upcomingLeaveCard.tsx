@@ -15,6 +15,9 @@ type LeaveDay = {
   status: LeaveItem["status"];
 };
 
+const API_ENDPOINT =
+  import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
+
 function LeaveCalendarCard() {
   const [leaveData, setLeaveData] = useState<LeaveItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +29,7 @@ function LeaveCalendarCard() {
       return;
     }
 
-    fetch(`http://localhost:8900/api/leave/`, {
+    fetch(`${API_ENDPOINT}/leave/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

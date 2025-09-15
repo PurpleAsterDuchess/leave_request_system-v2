@@ -22,7 +22,6 @@ export default function Home() {
         <main className="main-content">
           <LeaveCards />
 
-          {/* Flex container for the two sections */}
           <div
             style={{
               display: "flex",

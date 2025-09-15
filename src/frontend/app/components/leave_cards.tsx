@@ -3,13 +3,16 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import React, { useEffect, useState } from "react";
 
+const API_ENDPOINT =
+  import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
+
 export const LeaveCards = () => {
   const [leaveData, setLeaveData] = useState<null | {
     initialAlTotal: number;
     remainingAl: number;
   }>(null);
 
-  useEffect(() => {
+  const fetchLeaveCards = () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -17,7 +20,7 @@ export const LeaveCards = () => {
       return;
     }
 
-    fetch("http://localhost:8900/api/leave/staff", {
+    fetch(`${API_ENDPOINT}/leave/staff`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -36,6 +39,10 @@ export const LeaveCards = () => {
         }
       })
       .catch((err) => console.error(err));
+  };
+
+  useEffect(() => {
+    fetchLeaveCards();
   }, []);
 
   if (!leaveData) {

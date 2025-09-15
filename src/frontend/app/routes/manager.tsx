@@ -2,8 +2,10 @@ import type { Route } from "./+types/home";
 import { NavBar } from "../components/navbar";
 import { SideBar } from "../components/sidebar";
 import { useState, useEffect } from "react";
-import { LeaveCards } from "~/components/leave_cards";
 import { LeaveRequestModal } from "../modals/leaveReqModal";
+
+const API_ENDPOINT =
+  import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -36,7 +38,7 @@ export default function Manager() {
     if (!token)
       return console.error("No token found. User might not be logged in.");
 
-    fetch("http://localhost:8900/api/leave", {
+    fetch(`${API_ENDPOINT}/leave`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -68,7 +70,7 @@ export default function Manager() {
     setModalError("");
 
     try {
-      const res = await fetch("http://localhost:8900/api/leave/staff", {
+      const res = await fetch(`${API_ENDPOINT}/leave/staff`, {
         method: "POST",
         headers: {
           authorization: `Bearer ${token}`,
@@ -100,7 +102,7 @@ export default function Manager() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("http://localhost:8900/api/leave", {
+    fetch(`${API_ENDPOINT}/leave`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,

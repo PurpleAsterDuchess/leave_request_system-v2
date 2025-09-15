@@ -5,6 +5,9 @@ import { useState, useEffect } from "react";
 import { LeaveCards } from "~/components/leave_cards";
 import { LeaveRequestModal } from "../modals/leaveReqModal";
 
+const API_ENDPOINT =
+  import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
+
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "My leave" },
@@ -31,7 +34,7 @@ export default function MyLeave() {
     if (!token)
       return console.error("No token found. User might not be logged in.");
 
-    fetch("http://localhost:8900/api/leave/staff", {
+    fetch(`${API_ENDPOINT}/leave/staff`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -63,7 +66,7 @@ export default function MyLeave() {
     setModalError("");
 
     try {
-      const res = await fetch("http://localhost:8900/api/leave/staff", {
+      const res = await fetch(`${API_ENDPOINT}/leave/staff`, {
         method: "POST",
         headers: {
           authorization: `Bearer ${token}`,
@@ -95,7 +98,7 @@ export default function MyLeave() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("http://localhost:8900/api/leave/staff", {
+    fetch(`${API_ENDPOINT}/leave/staff`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
