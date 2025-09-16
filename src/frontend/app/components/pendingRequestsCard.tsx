@@ -62,9 +62,6 @@ function PendingRequestsCard(token: LoaderData) {
     leave: quickLeaveProps,
     status: "approved" | "rejected"
   ) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     try {
       const res = await fetch(`${API_ENDPOINT}/leave/`, {
         method: "PATCH",
