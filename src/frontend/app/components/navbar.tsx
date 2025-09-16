@@ -25,12 +25,17 @@ export  const NavBar = () => {
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav ms-auto">
             <li className="nav-item">
-              <a className="nav-link" href="http://localhost:5173/auth/logout">
+              <a
+                className="nav-link"
+                href="http://localhost:5173/auth/logout"
+                aria-controls="navbarSupportedContent"
+                aria-label="Logout"
+              >
                 <img
                   src="/logout.png"
                   alt="logout"
-                  className="d-inline-block align-top"
-                  style={{ paddingLeft: "10px", width: "1.5vw"}}
+                  className="me-2"
+                  style={{ width: "20px", height: "20px" }}
                 />
                 Logout
               </a>

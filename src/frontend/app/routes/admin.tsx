@@ -63,6 +63,8 @@ export default function MyLeave() {
   >([]);
   const [modalError, setModalError] = useState("");
   const { token } = useLoaderData<LoaderData>();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState<number | "">("");
 
   const fetchUsers = () => {
     fetch(`${API_ENDPOINT}/users`, {
@@ -242,15 +244,53 @@ export default function MyLeave() {
     fetchRoles();
   }, []);
 
+  const filteredData = userData.filter((item) => {
+    const matchesSearch =
+      item.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesRole = roleFilter === "" || item.role.id === roleFilter;
+
+    return matchesSearch && matchesRole;
+  });
+
+
   return (
     <>
       <NavBar />
       <div className="app-container">
         <SideBar />
         <main className="main-content">
+          <input
+            type="text"
+            placeholder="Search by name or email"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="mb-4 p-2 border border-gray-300 rounded"
+          />
+          <select
+            value={roleFilter}
+            onChange={(e) =>
+              setRoleFilter(e.target.value === "" ? "" : Number(e.target.value))
+            }
+            className="p-2 border border-gray-300 rounded"
+          >
+            <option value="">All Roles</option>
+            {roles.map((role) => (
+              <option key={role.id} value={role.id}>
+                {role.name}
+              </option>
+            ))}
+          </select>
           <button
             className="btn btn-primary mb-4"
             onClick={() => setShowModal(true)}
+            style={{
+              position: "absolute",
+              right: 0,
+              transform: "translateY(-50%)",
+            }}
           >
             Create user
           </button>
@@ -274,7 +314,7 @@ export default function MyLeave() {
               </tr>
             </thead>
             <tbody>
-              {userData
+              {filteredData
                 .filter((user) => user.id !== undefined && user.id !== null)
                 .map((user, idx) => (
                   <tr key={user.id}>
@@ -342,7 +382,8 @@ export default function MyLeave() {
                             .filter(
                               (manager) =>
                                 manager.id !== user.manager?.id &&
-                                manager.role.id === 2 && manager.id !== user.id
+                                manager.role.id === 2 &&
+                                manager.id !== user.id
                             )
                             .map((manager) => (
                               <option key={manager.id} value={manager.id}>

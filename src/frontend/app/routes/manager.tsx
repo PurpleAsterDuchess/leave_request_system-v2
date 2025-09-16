@@ -48,6 +48,7 @@ export default function Manager() {
   const [showModal, setShowModal] = useState(false);
   const [modalError, setModalError] = useState("");
   const { token } = useLoaderData<LoaderData>();
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchLeaves = () => {
     fetch(`${API_ENDPOINT}/leave`, {
@@ -123,20 +124,36 @@ export default function Manager() {
       .then(() => fetchLeaves())
       .catch((err) => console.error(err));
   };
-
+  const filteredData = leaveData.filter(
+    (item) =>
+      item.user.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.user.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   return (
     <>
       <NavBar />
       <div className="app-container">
         <SideBar />
         <main className="main-content">
+          <input
+            type="text"
+            placeholder="Search by name or email"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="mb-4 p-2 border border-gray-300 rounded"
+          />
           <button
             className="btn btn-primary mb-4"
             onClick={() => setShowModal(true)}
+            style={{
+              position: "absolute",
+              right: 0,
+              transform: "translateY(-50%)",
+            }}
           >
             Create Leave
           </button>
-
           <LeaveRequestModal
             show={showModal}
             onClose={() => setShowModal(false)}
@@ -157,7 +174,7 @@ export default function Manager() {
               </tr>
             </thead>
             <tbody>
-              {leaveData
+              {filteredData
                 .filter(
                   (leave) =>
                     leave.leaveId !== undefined && leave.leaveId !== null
