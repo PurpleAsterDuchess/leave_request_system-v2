@@ -3,6 +3,8 @@ import { NavBar } from "../components/navbar";
 import { SideBar } from "../components/sidebar";
 import { useState, useEffect } from "react";
 import { LeaveRequestModal } from "../modals/leaveReqModal";
+import { getUserId } from "~/services/session.server";
+import { redirect, useLoaderData } from "react-router";
 
 const API_ENDPOINT =
   import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
@@ -28,16 +30,26 @@ type Leave = {
   updatedAt: string;
 };
 
+type LoaderData = {
+  token: string;
+};
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const token = await getUserId(request);
+  if (!token) {
+    return redirect("/auth/login");
+  } else {
+    return { token };
+  }
+}
+
 export default function Manager() {
   const [leaveData, setLeaveData] = useState<Leave[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [modalError, setModalError] = useState("");
+  const { token } = useLoaderData<LoaderData>();
 
   const fetchLeaves = () => {
-    const token = localStorage.getItem("token");
-    if (!token)
-      return console.error("No token found. User might not be logged in.");
-
     fetch(`${API_ENDPOINT}/leave`, {
       method: "GET",
       headers: {
@@ -64,9 +76,6 @@ export default function Manager() {
     endDate: string;
     reason: string;
   }) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     setModalError("");
 
     try {
@@ -99,9 +108,6 @@ export default function Manager() {
   };
 
   const updateStatus = (leave: Leave, status: "approved" | "rejected") => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     fetch(`${API_ENDPOINT}/leave`, {
       method: "PATCH",
       headers: {

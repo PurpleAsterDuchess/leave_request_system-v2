@@ -4,6 +4,22 @@ import { SideBar } from "../components/sidebar";
 import { useState, useEffect } from "react";
 import { LeaveCards } from "~/components/leave_cards";
 import { LeaveRequestModal } from "../modals/leaveReqModal";
+import { getUserId } from "~/services/session.server";
+import { redirect } from "react-router";
+import { useLoaderData } from "react-router";
+
+type Leave = {
+  leaveId: number;
+  startDate: string;
+  endDate: string;
+  status: string;
+  reason?: string;
+  updatedAt: string;
+};
+
+type LoaderData = {
+  token: string;
+};
 
 const API_ENDPOINT =
   import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
@@ -15,25 +31,22 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-type Leave = {
-  leaveId: number;
-  startDate: string;
-  endDate: string;
-  status: string;
-  reason?: string;
-  updatedAt: string;
-};
+export async function loader({ request }: Route.LoaderArgs) {
+  const token = await getUserId(request);
+  if (!token) {
+    return redirect("/auth/login");
+  } else {
+    return { token };
+  }
+}
 
 export default function MyLeave() {
   const [leaveData, setLeaveData] = useState<Leave[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [modalError, setModalError] = useState("");
+  const { token } = useLoaderData<LoaderData>();
 
   const fetchLeaves = () => {
-    const token = localStorage.getItem("token");
-    if (!token)
-      return console.error("No token found. User might not be logged in.");
-
     fetch(`${API_ENDPOINT}/leave/staff`, {
       method: "GET",
       headers: {
@@ -60,9 +73,6 @@ export default function MyLeave() {
     endDate: string;
     reason: string;
   }) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     setModalError("");
 
     try {
@@ -95,9 +105,6 @@ export default function MyLeave() {
   };
 
   const cancelStaffLeave = (leave: Leave) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     fetch(`${API_ENDPOINT}/leave/staff`, {
       method: "PATCH",
       headers: {
@@ -120,7 +127,7 @@ export default function MyLeave() {
       <div className="app-container">
         <SideBar />
         <main className="main-content">
-          <LeaveCards />
+          <LeaveCards token={token}/>
 
           <button
             className="btn btn-primary mb-4"

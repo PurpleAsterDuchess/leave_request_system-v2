@@ -3,27 +3,24 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import React, { useEffect, useState } from "react";
 
+type LoaderData = {
+  token: string;
+};
+
 const API_ENDPOINT =
   import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
 
-export const LeaveCards = () => {
+export const LeaveCards = (token:LoaderData) => {
   const [leaveData, setLeaveData] = useState<null | {
     initialAlTotal: number;
     remainingAl: number;
   }>(null);
 
   const fetchLeaveCards = () => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      console.error("No token found. User might not be logged in.");
-      return;
-    }
-
     fetch(`${API_ENDPOINT}/leave/staff`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token.token}`,
         "Content-Type": "application/json",
       },
     })

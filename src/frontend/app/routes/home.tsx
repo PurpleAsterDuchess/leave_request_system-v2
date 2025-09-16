@@ -7,6 +7,11 @@ import BankHolidaysCard from "~/components/bankHolidaysCard";
 import LeaveCalendarCard from "../components/upcomingLeaveCard";
 import { redirect } from "react-router";
 import { getUserId } from "~/services/session.server";
+import { useLoaderData } from "react-router";
+
+type LoaderData = {
+  token: string;
+};
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -25,13 +30,14 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function Home() {
+  const { token } = useLoaderData<LoaderData>();
   return (
     <>
       <NavBar />
       <div className="app-container">
         <SideBar />
         <main className="main-content">
-          <LeaveCards />
+          <LeaveCards token={token} />
           <div
             style={{
               display: "flex",
@@ -43,11 +49,11 @@ export default function Home() {
             }}
           >
             <div style={{ flex: 0.6 }}>
-              <PendingRequestsCard />
+              <PendingRequestsCard token={token}/>
             </div>
 
             <div style={{ flex: 0.4, marginRight: "1rem" }}>
-              <LeaveCalendarCard />
+              <LeaveCalendarCard token={token}/>
               <BankHolidaysCard />
             </div>
           </div>

@@ -14,24 +14,23 @@ type quickLeaveProps = {
   remainingAl: number;
 };
 
+type LoaderData = {
+  token: string;
+};
+
 const API_ENDPOINT =
   import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
 
-function PendingRequestsCard() {
+function PendingRequestsCard(token: LoaderData) {
   const [leaveData, setLeaveData] = useState<quickLeaveProps[]>([]);
 
   const fetchPendingLeaves = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("No token found. User might not be logged in.");
-      return;
-    }
 
     try {
       const res = await fetch(`${API_ENDPOINT}/leave/`, {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token.token}`,
           "Content-Type": "application/json",
         },
       });

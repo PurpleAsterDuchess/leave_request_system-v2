@@ -3,6 +3,8 @@ import { NavBar } from "../components/navbar";
 import { SideBar } from "../components/sidebar";
 import { useState, useEffect } from "react";
 import { NewUserModal } from "~/modals/newUserModal";
+import { getUserId } from "~/services/session.server";
+import { redirect, useLoaderData } from "react-router";
 
 const API_ENDPOINT =
   import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
@@ -34,6 +36,19 @@ type Users = {
   remainingAl: number;
 };
 
+type LoaderData = {
+  token: string;
+};
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const token = await getUserId(request);
+  if (!token) {
+    return redirect("/auth/login");
+  } else {
+    return { token };
+  }
+}
+
 export default function MyLeave() {
   const [userData, setUserData] = useState<Users[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -47,12 +62,9 @@ export default function MyLeave() {
     { id: number; firstname: string; surname: string; role: { id: number } }[]
   >([]);
   const [modalError, setModalError] = useState("");
+  const { token } = useLoaderData<LoaderData>();
 
   const fetchUsers = () => {
-    const token = localStorage.getItem("token");
-    if (!token)
-      return console.error("No token found. User might not be logged in.");
-
     fetch(`${API_ENDPOINT}/users`, {
       method: "GET",
       headers: {
@@ -71,10 +83,6 @@ export default function MyLeave() {
   };
 
   const fetchManagers = () => {
-    const token = localStorage.getItem("token");
-    if (!token)
-      return console.error("No token found. User might not be logged in.");
-
     fetch(`${API_ENDPOINT}/users`, {
       method: "GET",
       headers: {
@@ -93,8 +101,6 @@ export default function MyLeave() {
   };
 
   const fetchRoles = () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
     fetch(`${API_ENDPOINT}/roles`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -119,9 +125,6 @@ export default function MyLeave() {
     managerId?: number | null;
     password: string;
   }) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     setModalError("");
 
     try {
@@ -155,9 +158,6 @@ export default function MyLeave() {
   };
 
   const deleteUser = (user: { id: number }) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     fetch(`${API_ENDPOINT}/users/${user.id}`, {
       method: "DELETE",
       headers: {
@@ -175,9 +175,6 @@ export default function MyLeave() {
   };
 
   const saveEdit = (user: Users) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     let body: Record<string, any> = { id: user.id };
 
     if (editing?.field === "role") {
@@ -223,9 +220,6 @@ export default function MyLeave() {
   };
 
   const resetLeave = (user: { id: number }) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     fetch(`${API_ENDPOINT}/users/${user.id}/reset-Al`, {
       method: "POST",
       headers: {

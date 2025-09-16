@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
+
 type LeaveRequestModalProps = {
   show: boolean;
   onClose: () => void;
@@ -60,6 +61,10 @@ export const LeaveRequestModal = ({
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        <p style={{ "color": 'red' }}>
+          WARNING: This will create leave for the current user as no uid is
+          provided
+        </p>
         <Form>
           <Form.Group className="mb-3" controlId="leaveStartDate">
             <Form.Label>Start Date</Form.Label>

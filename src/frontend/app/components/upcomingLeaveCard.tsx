@@ -15,24 +15,22 @@ type LeaveDay = {
   status: LeaveItem["status"];
 };
 
+type LoaderData = {
+  token: string;
+};
+
 const API_ENDPOINT =
   import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
 
-function LeaveCalendarCard() {
+function LeaveCalendarCard(token: LoaderData) {
   const [leaveData, setLeaveData] = useState<LeaveItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const fetchLeaves = () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("No token found. Please log in.");
-      return;
-    }
-
     fetch(`${API_ENDPOINT}/leave/`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token.token}`,
         "Content-Type": "application/json",
       },
     })
@@ -112,7 +110,8 @@ function LeaveCalendarCard() {
         <Calendar
           tileClassName={({ date }) => {
             const leaveDay = leaveDates.find(
-            (leaveDate) => leaveDate.date.toDateString() === date.toDateString()
+              (leaveDate) =>
+                leaveDate.date.toDateString() === date.toDateString()
             );
 
             if (!leaveDay) return "";
