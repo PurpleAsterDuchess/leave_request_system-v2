@@ -21,16 +21,15 @@ type LoaderData = {
 const API_ENDPOINT =
   import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
 
-function PendingRequestsCard(token: LoaderData) {
+function PendingRequestsCard({ token }: LoaderData) {
   const [leaveData, setLeaveData] = useState<quickLeaveProps[]>([]);
 
   const fetchPendingLeaves = async () => {
-
     try {
-      const res = await fetch(`${API_ENDPOINT}/leave/`, {
+      const res = await fetch(`${API_ENDPOINT}/leave`, {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${token.token}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
@@ -39,45 +38,45 @@ function PendingRequestsCard(token: LoaderData) {
       const data = await res.json();
 
       if (Array.isArray(data?.data)) {
-        setLeaveData(
-          data.data.map((leave: any) => ({
-            leaveId: leave.id,
-            firstname: leave.user.firstname,
-            surname: leave.user.surname,
-            email: leave.user.email,
-            status: leave.status,
-            startDate: leave.startDate,
-            endDate: leave.endDate,
-            initialAlTotal: leave.user.initialAlTotal,
-            remainingAl: leave.user.remainingAl,
-          }))
-        );
+        const formattedData = data.data.map((leave: any) => ({
+          leaveId: leave.leaveId,
+          firstname: leave.user.firstname,
+          surname: leave.user.surname,
+          email: leave.user.email,
+          status: leave.status,
+          startDate: leave.startDate,
+          endDate: leave.endDate,
+          initialAlTotal: leave.user.initialAlTotal,
+          remainingAl: leave.user.remainingAl,
+        }));
+        setLeaveData(formattedData);
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  const updateStatus = async (
+  const updateStatus = (
     leave: quickLeaveProps,
     status: "approved" | "rejected"
   ) => {
-    try {
-      const res = await fetch(`${API_ENDPOINT}/leave/`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ id: leave.leaveId, status }),
-      });
-
-      if (!res.ok) throw new Error("Failed to change leave request status");
-      await res.json();
-      fetchPendingLeaves();
-    } catch (err) {
-      console.error(err);
-    }
+    console.log(leave.leaveId);
+    console.log(leave.email);
+    console.log(status);
+    fetch(`${API_ENDPOINT}/leave`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: leave.leaveId, status: status }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to change leave request status");
+        return res.json();
+      })
+      .then(() => fetchPendingLeaves())
+      .catch((err) => console.error(err));
   };
 
   useEffect(() => {
