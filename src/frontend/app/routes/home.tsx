@@ -5,12 +5,23 @@ import { LeaveCards } from "../components/leave_cards";
 import PendingRequestsCard from "~/components/pendingRequestsCard";
 import BankHolidaysCard from "~/components/bankHolidaysCard";
 import LeaveCalendarCard from "../components/upcomingLeaveCard";
+import { redirect } from "react-router";
+import { getUserId } from "~/services/session.server";
 
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "Dashboard" },
     { name: "description", content: "Welcome to React Router!" },
   ];
+}
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const token = await getUserId(request);
+  if (!token) {
+    return redirect("/auth/login");
+  } else {
+    return { token };
+  }
 }
 
 export default function Home() {
@@ -21,7 +32,6 @@ export default function Home() {
         <SideBar />
         <main className="main-content">
           <LeaveCards />
-
           <div
             style={{
               display: "flex",
