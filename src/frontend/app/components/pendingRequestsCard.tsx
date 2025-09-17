@@ -34,7 +34,11 @@ function PendingRequestsCard({ token }: LoaderData) {
         },
       });
 
-      if (!res.ok) throw new Error("Failed to fetch leave data");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to fetch staff's leave data");
+      }
+
       const data = await res.json();
 
       if (Array.isArray(data?.data)) {
@@ -51,32 +55,35 @@ function PendingRequestsCard({ token }: LoaderData) {
         }));
         setLeaveData(formattedData);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.log(err.message || "Something went wrong fetching leave data");
     }
   };
 
-  const updateStatus = (
+  const updateStatus = async (
     leave: quickLeaveProps,
     status: "approved" | "rejected"
   ) => {
-    console.log(leave.leaveId);
-    console.log(leave.email);
-    console.log(status);
-    fetch(`${API_ENDPOINT}/leave`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id: leave.leaveId, status: status }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to change leave request status");
-        return res.json();
-      })
-      .then(() => fetchPendingLeaves())
-      .catch((err) => console.error(err));
+    try {
+      const res = await fetch(`${API_ENDPOINT}/leave`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: leave.leaveId, status }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to change leave status");
+      }
+
+      await res.json();
+      fetchPendingLeaves();
+    } catch (err: any) {
+      alert(err.message || "Error updating leave request");
+    }
   };
 
   useEffect(() => {
