@@ -74,14 +74,26 @@ export default function MyLeave() {
         "Content-Type": "application/json",
       },
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch users");
-        return res.json();
+      .then(async (res) => {
+        const contentType = res.headers.get("Content-Type");
+        const isJson = contentType && contentType.includes("application/json");
+        const errorBody = isJson ? await res.json() : null;
+
+        if (!res.ok) {
+          const errorMessage =
+            errorBody?.message || errorBody?.error || "Failed to fetch users";
+          throw new Error(errorMessage);
+        }
+
+        return errorBody;
       })
       .then((data) => {
         setUserData(data?.data || []);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        alert(`Error: ${err.message}`);
+        console.error("Fetch users failed:", err);
+      });
   };
 
   const fetchManagers = () => {
@@ -138,7 +150,7 @@ export default function MyLeave() {
         },
         body: JSON.stringify(user),
       });
-
+      
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         const errorMessage =
@@ -168,12 +180,27 @@ export default function MyLeave() {
       },
       body: JSON.stringify(user),
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to delete user");
-        return res.json();
+      .then(async (res) => {
+        const contentType = res.headers.get("Content-Type");
+        const isJson = contentType && contentType.includes("application/json");
+        const responseBody = isJson ? await res.json() : null;
+        if (!res.ok) {
+          const errorMessage =
+            responseBody?.error.message ||
+            "Failed to delete user";
+          throw new Error(errorMessage);
+        }
+
+        return responseBody;
       })
-      .then(() => fetchUsers())
-      .catch((err) => console.error(err));
+      .then(() => {
+        alert("User deleted successfully");
+        fetchUsers(); // Refresh the list
+      })
+      .catch((err) => {
+        alert(`Error: ${err.message}`);
+        console.error("Delete user failed:", err);
+      });
   };
 
   const saveEdit = (user: Users) => {
@@ -254,7 +281,6 @@ export default function MyLeave() {
 
     return matchesSearch && matchesRole;
   });
-
 
   return (
     <>
