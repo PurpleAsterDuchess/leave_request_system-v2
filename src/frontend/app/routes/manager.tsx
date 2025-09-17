@@ -22,6 +22,7 @@ type Leave = {
     firstname: string;
     surname: string;
     email: string;
+    remainingAl: number;
   };
   startDate: string;
   endDate: string;
@@ -169,6 +170,7 @@ export default function Manager() {
                 <th scope="col">Start</th>
                 <th scope="col">End</th>
                 <th scope="col">Status</th>
+                <th scope="col">Remaining Leave</th>
                 <th scope="col">Last updated</th>
                 <th scope="col">Actions</th>
               </tr>
@@ -188,6 +190,7 @@ export default function Manager() {
                     <td>{leave.startDate}</td>
                     <td>{leave.endDate}</td>
                     <td>{leave.status}</td>
+                    <td>{leave.user.remainingAl}</td>
                     <td>{leave.updatedAt}</td>
                     <td>
                       {leave.status == "pending" && (
