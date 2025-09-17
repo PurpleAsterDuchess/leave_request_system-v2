@@ -104,22 +104,42 @@ export default function MyLeave() {
     }
   };
 
-  const cancelStaffLeave = (leave: Leave) => {
-    fetch(`${API_ENDPOINT}/leave/staff`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id: leave.leaveId, status: "canceled" }),
+const cancelStaffLeave = (leave: Leave) => {
+  fetch(`${API_ENDPOINT}/leave/staff`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ id: leave.leaveId, status: "canceled" }),
+  })
+    .then(async (res) => {
+      const contentType = res.headers.get("Content-Type");
+      const isJson = contentType && contentType.includes("application/json");
+      const responseBody = isJson ? await res.json() : null;
+
+      if (!res.ok) {
+        const errorMessage =
+          responseBody?.error.message ||
+          "Failed to cancel leave request";
+        throw new Error(errorMessage);
+      }
+
+      return responseBody;
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to cancel leave request");
-        return res.json();
-      })
-      .then(() => fetchLeaves())
-      .catch((err) => console.error(err));
-  };
+    .then(() => {
+      alert("Leave request canceled successfully");
+      fetchLeaves();
+    })
+    .catch((err) => {
+      const message =
+        typeof err.message === "string"
+          ? err.message
+          : JSON.stringify(err.message || err);
+      alert(`Error: ${message}`);
+      console.error("Cancel leave failed:", err);
+    });
+};
 
   return (
     <>
