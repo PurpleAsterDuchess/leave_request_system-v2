@@ -22,15 +22,16 @@ type LoaderData = {
 const API_ENDPOINT =
   import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
 
-function LeaveCalendarCard(token: LoaderData) {
+function LeaveCalendarCard({ token }: LoaderData) {
   const [leaveData, setLeaveData] = useState<LeaveItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchLeaves = () => {
-    fetch(`${API_ENDPOINT}/leave/`, {
+    fetch(`${API_ENDPOINT}/leave/staff`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token.token}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
     })
@@ -51,10 +52,12 @@ function LeaveCalendarCard(token: LoaderData) {
           setLeaveData([]);
         }
       })
-      .catch((err) => {
-        console.error(err);
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        alert(message);
         setError("Unable to load leave data.");
-      });
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -69,7 +72,11 @@ function LeaveCalendarCard(token: LoaderData) {
     leaveData.forEach((leave) => {
       const start = new Date(leave.startDate);
       const end = new Date(leave.endDate);
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      for (
+        let d = new Date(start);
+        d <= end;
+        d = new Date(d.getTime() + 86400000)
+      ) {
         allDays.push({
           date: new Date(d.getTime()),
           status: leave.status,
@@ -92,8 +99,9 @@ function LeaveCalendarCard(token: LoaderData) {
     return Array.from(grouped.values());
   }, [leaveData]);
 
+  if (loading) return <p>Loading leave data...</p>;
   if (error) return <p>{error}</p>;
-  if (leaveData.length === 0) return <p>Loading leave data...</p>;
+  if (leaveData.length === 0) return <p>No leave booked yet.</p>;
 
   return (
     <Card
