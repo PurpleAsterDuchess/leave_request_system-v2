@@ -36,7 +36,7 @@ export default function Home() {
       <NavBar />
       <div className="app-container">
         <SideBar />
-        <main className="main-content">
+        <main className="main-content" aria-label="Dashboard">
           <LeaveCards token={token} />
           <div
             style={{

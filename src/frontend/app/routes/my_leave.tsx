@@ -104,54 +104,58 @@ export default function MyLeave() {
     }
   };
 
-const cancelStaffLeave = (leave: Leave) => {
-  fetch(`${API_ENDPOINT}/leave/staff`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ id: leave.leaveId, status: "canceled" }),
-  })
-    .then(async (res) => {
-      const contentType = res.headers.get("Content-Type");
-      const isJson = contentType && contentType.includes("application/json");
-      const responseBody = isJson ? await res.json() : null;
-
-      if (!res.ok) {
-        const errorMessage =
-          responseBody?.error.message ||
-          "Failed to cancel leave request";
-        throw new Error(errorMessage);
-      }
-
-      return responseBody;
+  const cancelStaffLeave = (leave: Leave) => {
+    fetch(`${API_ENDPOINT}/leave/staff`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: leave.leaveId, status: "canceled" }),
     })
-    .then(() => {
-      alert("Leave request canceled successfully");
-      fetchLeaves();
-    })
-    .catch((err) => {
-      const message =
-        typeof err.message === "string"
-          ? err.message
-          : JSON.stringify(err.message || err);
-      alert(`Error: ${message}`);
-      console.error("Cancel leave failed:", err);
-    });
-};
+      .then(async (res) => {
+        const contentType = res.headers.get("Content-Type");
+        const isJson = contentType && contentType.includes("application/json");
+        const responseBody = isJson ? await res.json() : null;
+
+        if (!res.ok) {
+          const errorMessage =
+            responseBody?.error.message || "Failed to cancel leave request";
+          throw new Error(errorMessage);
+        }
+
+        return responseBody;
+      })
+      .then(() => {
+        alert("Leave request canceled successfully");
+        fetchLeaves();
+      })
+      .catch((err) => {
+        const message =
+          typeof err.message === "string"
+            ? err.message
+            : JSON.stringify(err.message || err);
+        alert(`Error: ${message}`);
+        console.error("Cancel leave failed:", err);
+      });
+  };
 
   return (
     <>
       <NavBar />
       <div className="app-container">
         <SideBar />
-        <main className="main-content">
-          <LeaveCards token={token}/>
+        <main
+          className="main-content"
+          role="main"
+          aria-label="Your leave dashboard"
+        >
+          <LeaveCards token={token} />
 
           <button
             className="btn btn-primary mb-4"
             onClick={() => setShowModal(true)}
+            aria-label="Request leave"
           >
             Request Leave
           </button>
@@ -163,7 +167,7 @@ const cancelStaffLeave = (leave: Leave) => {
             error={modalError}
           />
 
-          <table className="table">
+          <table className="table" aria-describedby="leave-table-caption">
             <thead>
               <tr>
                 <th scope="col">#</th>
@@ -176,7 +180,10 @@ const cancelStaffLeave = (leave: Leave) => {
             </thead>
             <tbody>
               {leaveData
-                .filter((leave) => leave.leaveId !== undefined && leave.leaveId !== null)
+                .filter(
+                  (leave) =>
+                    leave.leaveId !== undefined && leave.leaveId !== null
+                )
                 .map((leave, idx) => (
                   <tr key={leave.leaveId}>
                     <th scope="row">{idx + 1}</th>
@@ -189,6 +196,7 @@ const cancelStaffLeave = (leave: Leave) => {
                         <button
                           className="btn btn-danger"
                           onClick={() => cancelStaffLeave(leave)}
+                          aria-label={`Cancel leave request starting ${leave.startDate} and ending ${leave.endDate}`}
                         >
                           Cancel
                         </button>

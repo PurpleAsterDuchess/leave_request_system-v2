@@ -10,7 +10,7 @@ type LoaderData = {
 const API_ENDPOINT =
   import.meta.env.API_ENDPOINT || "http://localhost:8900/api";
 
-export const LeaveCards = (token:LoaderData) => {
+export const LeaveCards = (token: LoaderData) => {
   const [leaveData, setLeaveData] = useState<null | {
     initialAlTotal: number;
     remainingAl: number;
@@ -52,7 +52,7 @@ export const LeaveCards = (token:LoaderData) => {
     const percent = (remaining / total) * 100;
     if (percent > 60) return "#C4E17F";
     if (percent > 30) return "#FFD580";
-    return "#FF9999"; // Red
+    return "#FF9999";
   };
 
   const getUsedColor = (used: number, total: number): string => {
@@ -74,6 +74,7 @@ export const LeaveCards = (token:LoaderData) => {
                 leaveData.initialAlTotal
               ),
             }}
+            aria-label={`${usedLeave} days of leave used`}
           >
             {usedLeave}
           </div>
@@ -91,6 +92,7 @@ export const LeaveCards = (token:LoaderData) => {
                 leaveData.initialAlTotal
               ),
             }}
+            aria-label={`${leaveData.remainingAl} days of leave remaining`}
           >
             {leaveData.remainingAl}
           </div>
@@ -103,6 +105,7 @@ export const LeaveCards = (token:LoaderData) => {
           <div
             className="square leave-text me-3"
             style={{ backgroundColor: "#9ED1DE" }}
+            aria-label={` ${leaveData.initialAlTotal} days of leave in total`}
           >
             {leaveData.initialAlTotal}
           </div>

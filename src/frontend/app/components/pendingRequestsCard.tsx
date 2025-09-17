@@ -98,7 +98,7 @@ function PendingRequestsCard({ token }: LoaderData) {
 
   return (
     <Row className="mb-3">
-      <h5 className="mb-3">Pending Requests</h5>
+      <h5 className="mb-3" aria-label="Pending Requests">Pending Requests</h5>
       {pendingLeaves.map((leave) => (
         <Card
           key={leave.leaveId}
@@ -110,8 +110,8 @@ function PendingRequestsCard({ token }: LoaderData) {
           <Col className="me-3">
             {leave.startDate} - {leave.endDate}
           </Col>
-          <Col className="me-3">Initial Leave: {leave.initialAlTotal}</Col>
-          <Col className="me-3">Remaining: {leave.remainingAl}</Col>
+          <Col className="me-3" aria-label="Initial Leave">Initial Leave: {leave.initialAlTotal}</Col>
+          <Col className="me-3" aria-label="Remaining">Remaining: {leave.remainingAl}</Col>
           <Col className="me-3 right-align">
             <button
               className="btn btn-success"
