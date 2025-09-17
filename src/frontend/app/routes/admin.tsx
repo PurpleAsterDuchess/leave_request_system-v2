@@ -150,7 +150,7 @@ export default function MyLeave() {
         },
         body: JSON.stringify(user),
       });
-      
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         const errorMessage =
@@ -257,14 +257,33 @@ export default function MyLeave() {
       },
       body: JSON.stringify(user),
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to reset leave");
-        return res.json();
-      })
-      .then(() => fetchUsers())
-      .catch((err) => console.error(err));
-  };
+      .then(async (res) => {
+        const contentType = res.headers.get("Content-Type");
+        const isJson = contentType && contentType.includes("application/json");
+        const responseBody = isJson ? await res.json() : null;
 
+        if (!res.ok) {
+          const errorMessage =
+            responseBody?.error.message ||
+            "Failed to reset leave. Please try again.";
+          throw new Error(errorMessage);
+        }
+
+        return responseBody;
+      })
+      .then(() => {
+        alert("Leave reset successfully");
+        fetchUsers(); // Refresh list
+      })
+      .catch((err) => {
+        const message =
+          typeof err.message === "string"
+            ? err.message
+            : JSON.stringify(err.message || err);
+        alert(`Error: ${message}`);
+        console.error("Reset leave failed:", err);
+      });
+  };
   useEffect(() => {
     fetchUsers();
     fetchManagers();
