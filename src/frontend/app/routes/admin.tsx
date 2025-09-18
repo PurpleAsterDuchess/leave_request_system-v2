@@ -344,6 +344,7 @@ export default function MyLeave() {
             onClose={() => setShowModal(false)}
             onSubmit={handleNewUser}
             error={modalError}
+            token={token}
           />
           <table className="table">
             <thead>
