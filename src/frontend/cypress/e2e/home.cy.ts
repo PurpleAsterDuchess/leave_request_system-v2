@@ -25,8 +25,8 @@ describe("Dashboard Home Page", () => {
           },
           {
             leaveId: 3,
-            startDate: "2025-10-01",
-            endDate: "2025-10-05",
+            startDate: "2025-09-28",
+            endDate: "2025-09-30",
             status: "rejected",
           },
         ],
@@ -151,7 +151,7 @@ describe("Dashboard Home Page", () => {
     cy.contains("Bob Smith").should("not.exist");
   });
 
-  it.only("changes pending leave status", () => {
+  it("changes pending leave status", () => {
      cy.visit("http://localhost:5173/");
      cy.wait("@getPendingLeaves");
 
@@ -167,7 +167,7 @@ describe("Dashboard Home Page", () => {
      });
   });
 
-  it.skip("loads leave calendar", () => {
+  it.only("loads leave calendar", () => {
     cy.visit("http://localhost:5173/");
 
     cy.wait("@getMyLeave");
@@ -183,8 +183,7 @@ describe("Dashboard Home Page", () => {
       .contains("24")
       .should("have.class", "leave-requested");
 
-    // failing this test
-    [1, 2, 3, 4, 5].forEach((day) => {
+    [28, 29, 30].forEach((day) => {
       cy.get(".react-calendar")
         .contains(day)
         .should("have.class", "leave-rejected");
