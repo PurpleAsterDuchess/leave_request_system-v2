@@ -10,7 +10,6 @@ type quickLeaveProps = {
   status: string;
   startDate: string;
   endDate: string;
-  initialAlTotal: number;
   remainingAl: number;
 };
 
@@ -50,7 +49,6 @@ function PendingRequestsCard({ token }: LoaderData) {
           status: leave.status,
           startDate: leave.startDate,
           endDate: leave.endDate,
-          initialAlTotal: leave.user.initialAlTotal,
           remainingAl: leave.user.remainingAl,
         }));
         setLeaveData(formattedData);
@@ -110,11 +108,10 @@ function PendingRequestsCard({ token }: LoaderData) {
           <Col className="me-3">
             {leave.startDate} - {leave.endDate}
           </Col>
-          <Col className="me-3" aria-label="Initial Leave">Initial Leave: {leave.initialAlTotal}</Col>
           <Col className="me-3" aria-label="Remaining">Remaining: {leave.remainingAl}</Col>
           <Col className="me-3 right-align">
             <button
-              className="btn btn-success"
+              className="btn btn-outline-success"
               style={{ marginRight: "5px" }}
               onClick={() => updateStatus(leave, "approved")}
             >
