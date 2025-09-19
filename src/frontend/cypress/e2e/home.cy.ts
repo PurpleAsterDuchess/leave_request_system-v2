@@ -152,19 +152,19 @@ describe("Dashboard Home Page", () => {
   });
 
   it("changes pending leave status", () => {
-     cy.visit("http://localhost:5173/");
-     cy.wait("@getPendingLeaves");
+    cy.visit("http://localhost:5173/");
+    cy.wait("@getPendingLeaves");
 
-     cy.contains("Alice Johnson")
-       .parent()
-       .within(() => {
-         cy.get(".btn-outline-success").click();
-       });
+    cy.contains("Alice Johnson")
+      .parent()
+      .within(() => {
+        cy.get(".btn-outline-success").click();
+      });
 
-     cy.wait("@updateLeaveStatus").its("request.body").should("deep.equal", {
-       id: 1,
-       status: "approved",
-     });
+    cy.wait("@updateLeaveStatus").its("request.body").should("deep.equal", {
+      id: 1,
+      status: "approved",
+    });
   });
 
   it("loads leave calendar", () => {
@@ -187,6 +187,19 @@ describe("Dashboard Home Page", () => {
       cy.get(".react-calendar")
         .contains(day)
         .should("have.class", "leave-rejected");
+    });
+  });
+
+  it("logs the user out and redirects to login", () => {
+    cy.visit("http://localhost:5173/");
+    cy.get("nav").should("exist");
+
+    // Click logout button
+    cy.get(".nav-link").contains("Logout").click();
+
+    // Assert session cleared
+    cy.window().then((win) => {
+      expect(win.localStorage.getItem("__session")).to.be.null;
     });
   });
 });
