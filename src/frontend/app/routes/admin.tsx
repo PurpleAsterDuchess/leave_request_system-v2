@@ -336,6 +336,7 @@ export default function MyLeave() {
               right: 0,
               transform: "translateY(-50%)",
             }}
+            aria-label="Create user"
           >
             Create user
           </button>
