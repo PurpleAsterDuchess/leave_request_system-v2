@@ -167,7 +167,7 @@ describe("Dashboard Home Page", () => {
      });
   });
 
-  it.only("loads leave calendar", () => {
+  it("loads leave calendar", () => {
     cy.visit("http://localhost:5173/");
 
     cy.wait("@getMyLeave");

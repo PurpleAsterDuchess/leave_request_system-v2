@@ -1,5 +1,4 @@
 describe("Dashboard Home Page", () => {
-  const API_ENDPOINT = "http://localhost:8900/api/my_leave";
   beforeEach(() => {
     window.cookieStore.set(
       "__session",
@@ -32,7 +31,7 @@ describe("Dashboard Home Page", () => {
             updatedAt: "2025-09-19",
           },
           {
-            leaveId: 3,
+            leaveId: 4,
             startDate: "2025-10-01",
             endDate: "2025-10-05",
             status: "canceled",
@@ -70,10 +69,9 @@ describe("Dashboard Home Page", () => {
         },
       });
     }).as("cancelLeave");
-
   });
 
-  it("loads leave cards and table", () => {
+  it("loads leave table", () => {
     cy.visit("http://localhost:5173/my_leave");
 
     cy.wait("@getLeaves");
@@ -100,7 +98,10 @@ describe("Dashboard Home Page", () => {
     cy.contains("approved").closest("tr").find("button.btn").should("exist");
     cy.contains("pending").closest("tr").find("button.btn").should("exist");
     cy.contains("rejected").closest("tr").find("button.btn").should("exist");
-    cy.contains("canceled").closest("tr").find("button.btn").should("not.exist");
+    cy.contains("canceled")
+      .closest("tr")
+      .find("button.btn")
+      .should("not.exist");
   });
 
   it("opens leave request modal and submits a new leave", () => {
@@ -127,18 +128,16 @@ describe("Dashboard Home Page", () => {
     cy.get(".modal").should("not.exist");
   });
 
-
   it("cancels a leave request", () => {
     cy.visit("http://localhost:5173/my_leave");
     cy.wait("@getLeaves");
 
+    cy.contains("2025-09-24");
     cy.contains("2025-09-24")
-      cy.contains("2025-09-24")
-        .closest("tr")
-        .within(() => {
-          cy.get("button[aria-label^='Cancel leave request']").click();
-        });
-
+      .closest("tr")
+      .within(() => {
+        cy.get("button[aria-label^='Cancel leave request']").click();
+      });
 
     cy.wait("@cancelLeave");
   });
